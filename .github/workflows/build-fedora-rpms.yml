@@ -205,7 +205,14 @@ jobs:
             nodejs \
             rpm-build \
             rpmdevtools \
-            which
+            which \
+            @development-tools |
+            gobject-introspection \
+            gobject-introspection-devel \
+            gi-docgen \
+            glib2 \
+            glib2-devel \
+            python3-gobject
 
       - name: Build shard packages
         env:
