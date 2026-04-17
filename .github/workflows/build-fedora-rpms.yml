@@ -206,7 +206,7 @@ jobs:
             rpm-build \
             rpmdevtools \
             which \
-            @development-tools |
+            @development-tools \
             gobject-introspection \
             gobject-introspection-devel \
             gi-docgen \
