@@ -1,79 +1,50 @@
-# Fedora 43 KDE x86-64-v4 COPR Pipeline
+# Fedora 43 KDE x86-64-v4 COPR Repo
 
-This repository bootstraps a personal COPR project that rebuilds the Fedora 43
-`KDE Plasma Workspaces` environment in `x86-64-v4`.
+This repository is a static input repo for a personal COPR project on
+`copr.fedorainfracloud.org`.
 
-The package set is not hard-coded by hand. It is resolved from Fedora 43 comps
-metadata using `dnf5`, starting from the `kde-desktop-environment` environment
-and layering in the Fedora KDE kickstart additions that the spin uses:
+It contains:
 
-- `firefox`
-- `kde-apps`
-- `kde-media`
-- `kde-pim`
-- `kde-spin-initial-setup`
-- `libreoffice`
+- a buildroot macro RPM that forces `x86-64-v4` optimization
+- the Fedora 43 KDE binary package manifest
+- the Fedora 43 KDE source package manifest
+- the binary-to-source mapping used to populate the COPR project
 
-It also applies the Fedora KDE spin additions and removals encoded in
-[config/kde_f43.json](/home/dawson/Dev/MIsc/KDE-x86_64-v4/config/kde_f43.json).
+It does not contain queueing or automation scripts.
 
-## What The Repo Does
+## Purpose
 
-- Resolves the Fedora 43 KDE binary package set and maps it to Fedora source packages.
-- Builds a `custom-macros` RPM that overrides `%optflags` to use `-march=x86-64-v4`.
-- Creates or reuses a personal COPR project on `copr.fedorainfracloud.org`.
-- Adds `custom-macros` to the `fedora-43-x86_64` buildroot.
-- Registers all source packages as Fedora dist-git package definitions pinned to branch `f43`.
-- Queues a two-pass rebuild so later packages can consume project-local rebuilt libraries.
+The target package set is Fedora 43 `KDE Plasma Workspaces`, based on the
+Fedora KDE spin package selection:
 
-## Files
+- environment: `kde-desktop-environment`
+- extra groups: `firefox`, `kde-apps`, `kde-media`, `kde-pim`,
+  `kde-spin-initial-setup`, `libreoffice`
+- Fedora KDE spin additions such as `fedora-release-kde`, `plasma-welcome-fedora`,
+  `kde-l10n`, `fuse`, `mediawriter`, `libreoffice-draw`, `libreoffice-math`
+- Fedora KDE spin removals such as `admin-tools`, `tracker`, `tracker-miners`,
+  `mariadb-server-utils`, `ktorrent`, `digikam`, `kipi-plugins`, `krusader`, `k3b`
 
-- Resolver: [scripts/resolve_kde_set.py](/home/dawson/Dev/MIsc/KDE-x86_64-v4/scripts/resolve_kde_set.py)
-- COPR driver: [scripts/copr_kde_pipeline.py](/home/dawson/Dev/MIsc/KDE-x86_64-v4/scripts/copr_kde_pipeline.py)
-- COPR macro RPM: [packaging/custom-macros/custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec)
-- Package-set definition: [config/kde_f43.json](/home/dawson/Dev/MIsc/KDE-x86_64-v4/config/kde_f43.json)
+The checked-in manifests currently resolve to:
 
-## Prerequisites
+- 342 binary packages in [binary-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/binary-packages.txt)
+- 265 source packages in [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt)
 
-- `copr-cli` installed and authenticated with your Fedora account.
-- `dnf5` available locally.
-- `rpmbuild` available locally.
+## Repo Contents
 
-Your COPR credentials should already work with:
+- Macro RPM spec: [custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec)
+- Binary package list: [binary-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/binary-packages.txt)
+- Source package list: [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt)
+- Binary to source mapping: [source-map.tsv](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-map.tsv)
+- COPR setup notes: [project-setup.md](/home/dawson/Dev/MIsc/KDE-x86_64-v4/copr/project-setup.md)
 
-```bash
-copr-cli whoami
-```
+## How To Use This Repo In COPR
 
-## Usage
+1. Create a personal COPR project with chroot `fedora-43-x86_64`.
+2. Build [custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec) into that project as `custom-macros`.
+3. Edit the project chroot and add `custom-macros` to the buildroot package list.
+4. Register each package from [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt) as a Fedora dist-git package on branch `f43`.
+5. Queue the rebuild in COPR batches, starting with low-level libraries and core KDE/Qt pieces if you want tighter ordering, or by broad passes if you are comfortable with a coarse rebuild.
 
-First resolve the Fedora 43 KDE package set:
-
-```bash
-./scripts/resolve_kde_set.py
-```
-
-That writes:
-
-- `manifests/fedora-43/manifest.json`
-- `manifests/fedora-43/binary-packages.txt`
-- `manifests/fedora-43/source-packages.txt`
-
-Then create and queue the COPR pipeline:
-
-```bash
-./scripts/copr_kde_pipeline.py --project kde-x86_64-v4 --disable-createrepo
-```
-
-If you want to target a specific owner or group explicitly:
-
-```bash
-./scripts/copr_kde_pipeline.py --owner your_fas_name --project kde-x86_64-v4 --disable-createrepo
-```
-
-## Notes
-
-- The resolver depends on Fedora 43 repository metadata being available through `dnf5`.
-- The rebuild is intentionally queued in two passes. The first pass rebuilds the stack with the new flags. The second pass gives consumers a chance to rebuild against project-local `x86-64-v4` libraries.
-- This is a practical COPR pipeline, not a full Fedora mass-rebuild dependency solver. If you want tighter dependency staging, reduce `--batch-size` or split known base libraries into earlier batches.
-- `--disable-createrepo` is recommended for large stacks because COPR keeps the internal development repository available to subsequent builds while avoiding expensive public metadata regeneration on every build.
+The exact COPR-side settings are documented in
+[project-setup.md](/home/dawson/Dev/MIsc/KDE-x86_64-v4/copr/project-setup.md).
