@@ -162,16 +162,29 @@ jobs:
       image: quay.io/fedora/fedora:${{ inputs.fedora_release }}
     strategy:
       fail-fast: false
-      max-parallel: 30
+      max-parallel: 128
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache Fedora DNF data
+        uses: actions/cache@v4
+        with:
+          path: |
+            /var/cache/dnf
+            /var/lib/dnf
+          key: dnf-fedora-${{ inputs.fedora_release }}
+          restore-keys: |
+            dnf-fedora-${{ inputs.fedora_release }}-
+
       - name: Install RPM build tooling
         run: |
+          mkdir -p /var/cache/dnf /var/lib/dnf
           dnf -y update
           dnf -y install \
+            --setopt=keepcache=1 \
+            --setopt=skip_if_unavailable=True \
             ca-certificates \
             dnf-plugins-core \
             fedpkg \
@@ -239,7 +252,18 @@ jobs:
               spec_file = next(package_dir.glob("*.spec"), None)
               if spec_file is None:
                   raise SystemExit(f"No spec file found for {package_name}")
-              subprocess.run(["dnf", "-y", "builddep", str(spec_file)], cwd=package_dir, check=True)
+              subprocess.run(
+                  [
+                      "dnf",
+                      "-y",
+                      "builddep",
+                      "--setopt=keepcache=1",
+                      "--setopt=skip_if_unavailable=True",
+                      str(spec_file),
+                  ],
+                  cwd=package_dir,
+                  check=True,
+              )
               topdir = rpmbuild_root / package_name
               for subdir in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
                   (topdir / subdir).mkdir(parents=True, exist_ok=True)
