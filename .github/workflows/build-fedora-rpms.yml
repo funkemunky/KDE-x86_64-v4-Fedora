@@ -221,6 +221,7 @@ jobs:
           import os
           import shutil
           import subprocess
+          import time
           from pathlib import Path
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
@@ -244,11 +245,30 @@ jobs:
           rpmbuild_root = workspace / ".rpmbuild"
           rpmbuild_root.mkdir(parents=True, exist_ok=True)
 
+          def run_with_retry(command, *, cwd=None, cleanup_path=None, attempts=4, initial_delay=5):
+              delay = initial_delay
+              for attempt in range(1, attempts + 1):
+                  if cleanup_path is not None and cleanup_path.exists():
+                      shutil.rmtree(cleanup_path)
+                  try:
+                      subprocess.run(command, cwd=cwd, check=True)
+                      return
+                  except subprocess.CalledProcessError:
+                      if attempt == attempts:
+                          raise
+                      print(
+                          f"Command failed on attempt {attempt}/{attempts}: {' '.join(command)}",
+                          flush=True,
+                      )
+                      print(f"Retrying in {delay} seconds...", flush=True)
+                      time.sleep(delay)
+                      delay *= 2
+
           for package_name in packages:
               package_dir = workspace / package_name
               if package_dir.exists():
                   shutil.rmtree(package_dir)
-              subprocess.run(
+              run_with_retry(
                   [
                       "git",
                       "clone",
@@ -259,9 +279,9 @@ jobs:
                       f"https://src.fedoraproject.org/rpms/{package_name}.git",
                       str(package_dir),
                   ],
-                  check=True,
+                  cleanup_path=package_dir,
               )
-              subprocess.run(["fedpkg", "sources"], cwd=package_dir, check=True)
+              run_with_retry(["fedpkg", "sources"], cwd=package_dir, attempts=3, initial_delay=10)
               spec_file = next(package_dir.glob("*.spec"), None)
               if spec_file is None:
                   raise SystemExit(f"No spec file found for {package_name}")
