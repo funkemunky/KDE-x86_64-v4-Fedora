@@ -318,14 +318,15 @@ jobs:
         env:
           SHARD_INDEX: ${{ matrix.shard }}
         run: |
-          OUTDIR="${GITHUB_WORKSPACE}/artifacts/shard-${SHARD_INDEX}"
+          SHARD_LABEL=$(printf "%03d" "${SHARD_INDEX}")
+          OUTDIR="${GITHUB_WORKSPACE}/artifacts/shard-${SHARD_LABEL}"
           ls -la "${OUTDIR}"
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-shard-${{ matrix.shard }}
-          path: artifacts/shard-${{ matrix.shard }}/
+          name: rpm-shard-${{ format('{0:03}', matrix.shard) }}
+          path: artifacts/shard-${{ format('{0:03}', matrix.shard) }}/
           if-no-files-found: error
 
       - name: Append build summary
@@ -333,9 +334,10 @@ jobs:
         env:
           SHARD_INDEX: ${{ matrix.shard }}
         run: |
-          echo "### shard-${SHARD_INDEX}" >> "$GITHUB_STEP_SUMMARY"
-          if [ -d "artifacts/shard-${SHARD_INDEX}" ]; then
-            find "artifacts/shard-${SHARD_INDEX}" -maxdepth 2 -type f | sort >> "$GITHUB_STEP_SUMMARY"
+          SHARD_LABEL=$(printf "%03d" "${SHARD_INDEX}")
+          echo "### shard-${SHARD_LABEL}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -d "artifacts/shard-${SHARD_LABEL}" ]; then
+            find "artifacts/shard-${SHARD_LABEL}" -maxdepth 2 -type f | sort >> "$GITHUB_STEP_SUMMARY"
           else
             echo "No artifacts collected." >> "$GITHUB_STEP_SUMMARY"
           fi
