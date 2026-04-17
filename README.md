@@ -1,50 +1,54 @@
-# Fedora 43 KDE x86-64-v4 COPR Repo
+# Fedora 43 KDE GitHub Actions RPM Builder
 
-This repository is a static input repo for a personal COPR project on
-`copr.fedorainfracloud.org`.
+This repository is a static GitHub Actions input repo for rebuilding Fedora 43
+KDE packages from Fedora dist-git with `x86-64-v4` code generation and `-O3`
+optimization.
 
-It contains:
+## What Is Checked In
 
-- a buildroot macro RPM that forces `x86-64-v4` optimization
-- the Fedora 43 KDE binary package manifest
-- the Fedora 43 KDE source package manifest
-- the binary-to-source mapping used to populate the COPR project
+- Fedora 43 KDE binary package manifest:
+  [binary-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/binary-packages.txt)
+- Fedora 43 source package manifest:
+  [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt)
+- Binary to source mapping:
+  [source-map.tsv](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-map.tsv)
+- A reference macro RPM spec showing the intended RPM flag override:
+  [custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec)
+- On-demand GitHub Actions workflow:
+  [build-fedora-rpms.yml](/home/dawson/Dev/MIsc/KDE-x86_64-v4/.github/workflows/build-fedora-rpms.yml)
 
-It does not contain queueing or automation scripts.
+The checked-in manifests currently cover:
 
-## Purpose
+- 342 Fedora 43 binary packages
+- 265 Fedora 43 source packages
 
-The target package set is Fedora 43 `KDE Plasma Workspaces`, based on the
-Fedora KDE spin package selection:
+## Build Model
 
-- environment: `kde-desktop-environment`
-- extra groups: `firefox`, `kde-apps`, `kde-media`, `kde-pim`,
-  `kde-spin-initial-setup`, `libreoffice`
-- Fedora KDE spin additions such as `fedora-release-kde`, `plasma-welcome-fedora`,
-  `kde-l10n`, `fuse`, `mediawriter`, `libreoffice-draw`, `libreoffice-math`
-- Fedora KDE spin removals such as `admin-tools`, `tracker`, `tracker-miners`,
-  `mariadb-server-utils`, `ktorrent`, `digikam`, `kipi-plugins`, `krusader`, `k3b`
+The workflow does not use COPR. It does this instead:
 
-The checked-in manifests currently resolve to:
+1. Reads package selections from the checked-in source manifest or from a manual dispatch input.
+2. Clones each selected Fedora dist-git repository from `src.fedoraproject.org`.
+3. Fetches source tarballs from Fedora lookaside using `fedpkg sources`.
+4. Installs `BuildRequires` with `dnf builddep`.
+5. Rebuilds the package with RPM macros overriding `%optflags` to:
+   `-O3 -march=x86-64-v4`
+6. Uploads the built `.rpm` and `.src.rpm` files as GitHub Actions artifacts.
 
-- 342 binary packages in [binary-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/binary-packages.txt)
-- 265 source packages in [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt)
+## Using The Workflow
 
-## Repo Contents
+Run the `Build Fedora RPMs` workflow manually with `workflow_dispatch`.
 
-- Macro RPM spec: [custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec)
-- Binary package list: [binary-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/binary-packages.txt)
-- Source package list: [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt)
-- Binary to source mapping: [source-map.tsv](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-map.tsv)
-- COPR setup notes: [project-setup.md](/home/dawson/Dev/MIsc/KDE-x86_64-v4/copr/project-setup.md)
+You can:
 
-## How To Use This Repo In COPR
+- build a specific list of source packages
+- provide binary package names and have them mapped to source packages
+- build a chunk from the checked-in manifest by `batch_index` and `batch_size`
 
-1. Create a personal COPR project with chroot `fedora-43-x86_64`.
-2. Build [custom-macros.spec](/home/dawson/Dev/MIsc/KDE-x86_64-v4/packaging/custom-macros/custom-macros.spec) into that project as `custom-macros`.
-3. Edit the project chroot and add `custom-macros` to the buildroot package list.
-4. Register each package from [source-packages.txt](/home/dawson/Dev/MIsc/KDE-x86_64-v4/manifests/fedora-43/source-packages.txt) as a Fedora dist-git package on branch `f43`.
-5. Queue the rebuild in COPR batches, starting with low-level libraries and core KDE/Qt pieces if you want tighter ordering, or by broad passes if you are comfortable with a coarse rebuild.
+This is important because GitHub Actions matrix jobs are capped, and the full
+Fedora 43 KDE source manifest contains 265 packages.
 
-The exact COPR-side settings are documented in
-[project-setup.md](/home/dawson/Dev/MIsc/KDE-x86_64-v4/copr/project-setup.md).
+## Practical Notes
+
+- The workflow is intended for on-demand rebuilds, not for one-click rebuilding of the full KDE stack in a single run.
+- Some packages may still fail in GitHub Actions because Fedora package builds can rely on environment assumptions that are easier to satisfy in Koji or COPR than in a generic CI runner.
+- If you want to rebuild the whole stack, dispatch the workflow in batches.

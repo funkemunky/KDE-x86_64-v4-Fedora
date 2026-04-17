@@ -1,0 +1,270 @@
+name: Build Fedora RPMs
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_kind:
+        description: "Interpret package_input as source or binary package names"
+        required: true
+        default: "source"
+        type: choice
+        options:
+          - source
+          - binary
+      package_input:
+        description: "Comma, space, or newline separated package list. Leave blank to use a manifest batch."
+        required: false
+        default: ""
+        type: string
+      batch_index:
+        description: "1-based manifest batch index used when package_input is blank"
+        required: true
+        default: "1"
+        type: string
+      batch_size:
+        description: "Manifest batch size used when package_input is blank"
+        required: true
+        default: "8"
+        type: string
+      source_manifest:
+        description: "Checked-in source manifest path"
+        required: true
+        default: "manifests/fedora-43/source-packages.txt"
+        type: string
+      source_map:
+        description: "Checked-in binary to source map path"
+        required: true
+        default: "manifests/fedora-43/source-map.tsv"
+        type: string
+      fedora_branch:
+        description: "Fedora dist-git branch"
+        required: true
+        default: "f43"
+        type: string
+      fedora_release:
+        description: "Fedora container release"
+        required: true
+        default: "43"
+        type: string
+      optimization_level:
+        description: "Compiler optimization level"
+        required: true
+        default: "-O3"
+        type: choice
+        options:
+          - -O2
+          - -O3
+      target_march:
+        description: "Target march override"
+        required: true
+        default: "x86-64-v4"
+        type: string
+      max_parallel:
+        description: "Maximum concurrent package builds in the matrix"
+        required: true
+        default: "4"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+      package_count: ${{ steps.select.outputs.package_count }}
+      max_parallel: ${{ steps.select.outputs.max_parallel }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: select
+        env:
+          PACKAGE_KIND: ${{ inputs.package_kind }}
+          PACKAGE_INPUT: ${{ inputs.package_input }}
+          BATCH_INDEX: ${{ inputs.batch_index }}
+          BATCH_SIZE: ${{ inputs.batch_size }}
+          SOURCE_MANIFEST: ${{ inputs.source_manifest }}
+          SOURCE_MAP: ${{ inputs.source_map }}
+          MAX_PARALLEL: ${{ inputs.max_parallel }}
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          source_manifest = Path(os.environ["SOURCE_MANIFEST"])
+          source_map_path = Path(os.environ["SOURCE_MAP"])
+          package_kind = os.environ["PACKAGE_KIND"].strip()
+          package_input = os.environ["PACKAGE_INPUT"]
+          batch_index = int(os.environ["BATCH_INDEX"])
+          batch_size = int(os.environ["BATCH_SIZE"])
+          max_parallel = int(os.environ["MAX_PARALLEL"])
+
+          source_packages = [
+              line.strip()
+              for line in source_manifest.read_text(encoding="ascii").splitlines()
+              if line.strip()
+          ]
+
+          binary_to_source = {}
+          for line in source_map_path.read_text(encoding="ascii").splitlines():
+              if not line.strip():
+                  continue
+              binary_name, source_name = line.split("\t", 1)
+              binary_to_source[binary_name] = source_name
+
+          def tokenize(raw: str):
+              parts = re.split(r"[\s,]+", raw.strip())
+              return [part for part in parts if part]
+
+          if package_input.strip():
+              selected = tokenize(package_input)
+          else:
+              start = max(batch_index - 1, 0) * batch_size
+              end = start + batch_size
+              selected = source_packages[start:end]
+
+          if package_kind == "binary":
+              mapped = []
+              missing = []
+              for binary_name in selected:
+                  source_name = binary_to_source.get(binary_name)
+                  if source_name is None:
+                      missing.append(binary_name)
+                  else:
+                      mapped.append(source_name)
+              if missing:
+                  raise SystemExit(
+                      "Missing binary-to-source mappings for: " + ", ".join(sorted(missing))
+                  )
+              selected = mapped
+
+          deduped = []
+          seen = set()
+          for package_name in selected:
+              if package_name not in seen:
+                  seen.add(package_name)
+                  deduped.append(package_name)
+
+          matrix = [{"package": package_name} for package_name in deduped]
+
+          github_output = Path(os.environ["GITHUB_OUTPUT"])
+          with github_output.open("a", encoding="utf-8") as fh:
+              fh.write(f"matrix={json.dumps(matrix)}\n")
+              fh.write(f"package_count={len(matrix)}\n")
+              fh.write(f"max_parallel={max_parallel}\n")
+          PY
+
+      - name: Summarize selection
+        run: |
+          echo "Selected packages: ${{ steps.select.outputs.package_count }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '${{ steps.select.outputs.matrix }}' >> "$GITHUB_STEP_SUMMARY"
+
+  build:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.package_count != '0' }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:${{ inputs.fedora_release }}
+    strategy:
+      fail-fast: false
+      max-parallel: ${{ fromJSON(needs.prepare.outputs.max_parallel) }}
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install RPM build tooling
+        run: |
+          dnf -y update
+          dnf -y install \
+            ca-certificates \
+            dnf-plugins-core \
+            fedpkg \
+            findutils \
+            git \
+            rpm-build \
+            rpmdevtools \
+            which
+
+      - name: Configure x86-64-v4 RPM macros
+        env:
+          OPT_LEVEL: ${{ inputs.optimization_level }}
+          TARGET_MARCH: ${{ inputs.target_march }}
+        run: |
+          cat > /root/.rpmmacros <<EOF
+          %optflags ${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
+          EOF
+          cat /root/.rpmmacros
+
+      - name: Clone Fedora dist-git
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+          FEDORA_BRANCH: ${{ inputs.fedora_branch }}
+        run: |
+          git clone --depth 1 --branch "${FEDORA_BRANCH}" "https://src.fedoraproject.org/rpms/${PACKAGE_NAME}.git" "${PACKAGE_NAME}"
+
+      - name: Fetch lookaside sources
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+        run: |
+          cd "${PACKAGE_NAME}"
+          fedpkg sources
+
+      - name: Install BuildRequires
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+        run: |
+          cd "${PACKAGE_NAME}"
+          SPEC_FILE="$(find . -maxdepth 1 -name '*.spec' | head -n 1)"
+          test -n "${SPEC_FILE}"
+          dnf -y builddep "${SPEC_FILE}"
+
+      - name: Build SRPM and RPMs
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+        run: |
+          TOPDIR="${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}"
+          mkdir -p "${TOPDIR}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
+          cd "${PACKAGE_NAME}"
+          SPEC_FILE="$(find . -maxdepth 1 -name '*.spec' | head -n 1)"
+          test -n "${SPEC_FILE}"
+          rpmbuild -ba "${SPEC_FILE}" \
+            --define "_topdir ${TOPDIR}" \
+            --define "_builddir ${TOPDIR}/BUILD" \
+            --define "_buildrootdir ${TOPDIR}/BUILDROOT" \
+            --define "_rpmdir ${TOPDIR}/RPMS" \
+            --define "_srcrpmdir ${TOPDIR}/SRPMS" \
+            --define "_sourcedir ${PWD}" \
+            --define "_specdir ${PWD}"
+
+      - name: Collect artifacts
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+        run: |
+          OUTDIR="${GITHUB_WORKSPACE}/artifacts/${PACKAGE_NAME}"
+          mkdir -p "${OUTDIR}"
+          find "${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}/RPMS" -type f -name '*.rpm' -exec cp -v {} "${OUTDIR}/" \;
+          find "${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}/SRPMS" -type f -name '*.src.rpm' -exec cp -v {} "${OUTDIR}/" \;
+          ls -la "${OUTDIR}"
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ matrix.package }}
+          path: artifacts/${{ matrix.package }}/
+          if-no-files-found: error
+
+      - name: Append build summary
+        if: always()
+        env:
+          PACKAGE_NAME: ${{ matrix.package }}
+        run: |
+          echo "### ${PACKAGE_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -d "artifacts/${PACKAGE_NAME}" ]; then
+            find "artifacts/${PACKAGE_NAME}" -maxdepth 1 -type f | sort >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No artifacts collected." >> "$GITHUB_STEP_SUMMARY"
+          fi
