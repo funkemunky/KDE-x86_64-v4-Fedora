@@ -36,6 +36,11 @@ on:
         required: true
         default: "43"
         type: string
+      builder_image:
+        description: "Prebuilt Fedora RPM builder image reference"
+        required: true
+        default: "ghcr.io/dawsonc/kde-x86_64-v4-fedora-builder:f43"
+        type: string
       optimization_level:
         description: "Compiler optimization level"
         required: true
@@ -171,7 +176,7 @@ jobs:
     if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
-      image: quay.io/fedora/fedora:${{ inputs.fedora_release }}
+      image: ${{ inputs.builder_image }}
     strategy:
       fail-fast: false
       max-parallel: 128
@@ -190,29 +195,17 @@ jobs:
           restore-keys: |
             dnf-fedora-${{ inputs.fedora_release }}-
 
-      - name: Install RPM build tooling
+      - name: Verify builder toolchain
         run: |
-          mkdir -p /var/cache/dnf /var/lib/dnf
-          dnf -y update
-          dnf -y install \
-            --setopt=keepcache=1 \
-            --setopt=skip_if_unavailable=True \
-            ca-certificates \
-            dnf-plugins-core \
-            fedpkg \
-            findutils \
-            git \
-            nodejs \
-            rpm-build \
-            rpmdevtools \
-            which \
-            @development-tools \
-            gobject-introspection \
-            gobject-introspection-devel \
-            gi-docgen \
-            glib2 \
-            glib2-devel \
-            python3-gobject
+          command -v dnf
+          command -v fedpkg
+          command -v rpmbuild
+          command -v git
+          command -v node
+          command -v gcc
+          command -v g-ir-scanner
+          command -v gi-docgen
+          rpm -q rpm-build rpmdevtools dnf-plugins-core
 
       - name: Build shard packages
         env:
