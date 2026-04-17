@@ -59,12 +59,6 @@ on:
         required: true
         default: "x86-64-v4"
         type: string
-      max_parallel:
-        description: "Maximum concurrent package builds in the matrix"
-        required: true
-        default: "4"
-        type: string
-
 permissions:
   contents: read
 
@@ -74,7 +68,6 @@ jobs:
     outputs:
       matrix: ${{ steps.select.outputs.matrix }}
       package_count: ${{ steps.select.outputs.package_count }}
-      max_parallel: ${{ steps.select.outputs.max_parallel }}
     steps:
       - uses: actions/checkout@v4
 
@@ -86,7 +79,6 @@ jobs:
           BATCH_SIZE: ${{ inputs.batch_size }}
           SOURCE_MANIFEST: ${{ inputs.source_manifest }}
           SOURCE_MAP: ${{ inputs.source_map }}
-          MAX_PARALLEL: ${{ inputs.max_parallel }}
         run: |
           python3 <<'PY'
           import json
@@ -100,8 +92,6 @@ jobs:
           package_input = os.environ["PACKAGE_INPUT"]
           batch_index = int(os.environ["BATCH_INDEX"])
           batch_size = int(os.environ["BATCH_SIZE"])
-          max_parallel = int(os.environ["MAX_PARALLEL"])
-
           source_packages = [
               line.strip()
               for line in source_manifest.read_text(encoding="ascii").splitlines()
@@ -154,7 +144,6 @@ jobs:
           with github_output.open("a", encoding="utf-8") as fh:
               fh.write(f"matrix={json.dumps(matrix)}\n")
               fh.write(f"package_count={len(matrix)}\n")
-              fh.write(f"max_parallel={max_parallel}\n")
           PY
 
       - name: Summarize selection
@@ -167,10 +156,10 @@ jobs:
     if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
-      image: fedora:${{ inputs.fedora_release }}
+      image: quay.io/fedora/fedora:${{ inputs.fedora_release }}
     strategy:
       fail-fast: false
-      max-parallel: ${{ fromJSON(needs.prepare.outputs.max_parallel) }}
+      max-parallel: 1
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
@@ -185,19 +174,18 @@ jobs:
             fedpkg \
             findutils \
             git \
+            nodejs \
             rpm-build \
             rpmdevtools \
             which
 
-      - name: Configure x86-64-v4 RPM macros
+      - name: Show x86-64-v4 override flags
         env:
           OPT_LEVEL: ${{ inputs.optimization_level }}
           TARGET_MARCH: ${{ inputs.target_march }}
         run: |
-          cat > /root/.rpmmacros <<EOF
-          %optflags ${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer
-          EOF
-          cat /root/.rpmmacros
+          OPTFLAGS_OVERRIDE="${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+          printf '%%optflags %s\n' "${OPTFLAGS_OVERRIDE}"
 
       - name: Clone Fedora dist-git
         env:
@@ -225,13 +213,17 @@ jobs:
       - name: Build SRPM and RPMs
         env:
           PACKAGE_NAME: ${{ matrix.package }}
+          OPT_LEVEL: ${{ inputs.optimization_level }}
+          TARGET_MARCH: ${{ inputs.target_march }}
         run: |
           TOPDIR="${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}"
+          OPTFLAGS_OVERRIDE="${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
           mkdir -p "${TOPDIR}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
           cd "${PACKAGE_NAME}"
           SPEC_FILE="$(find . -maxdepth 1 -name '*.spec' | head -n 1)"
           test -n "${SPEC_FILE}"
           rpmbuild -ba "${SPEC_FILE}" \
+            --define "optflags ${OPTFLAGS_OVERRIDE}" \
             --define "_topdir ${TOPDIR}" \
             --define "_builddir ${TOPDIR}/BUILD" \
             --define "_buildrootdir ${TOPDIR}/BUILDROOT" \
