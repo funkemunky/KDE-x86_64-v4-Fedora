@@ -77,8 +77,20 @@ jobs:
 
           source_manifest = Path(os.environ["SOURCE_MANIFEST"])
           source_map_path = Path(os.environ["SOURCE_MAP"])
+          requested_source_map_path = source_map_path
           package_kind = os.environ["PACKAGE_KIND"].strip()
           package_input = os.environ["PACKAGE_INPUT"]
+          if not source_manifest.exists():
+              raise SystemExit(f"Source manifest not found: {source_manifest}")
+          if not source_map_path.exists() and source_map_path.name == "binary-map.tsv":
+              compatibility_path = source_map_path.with_name("source-map.tsv")
+              if compatibility_path.exists():
+                  source_map_path = compatibility_path
+          if not source_map_path.exists():
+              raise SystemExit(
+                  f"Source map not found: {requested_source_map_path}. "
+                  f"Expected an existing TSV such as {requested_source_map_path.with_name('source-map.tsv')}"
+              )
           source_packages = [
               line.strip()
               for line in source_manifest.read_text(encoding="ascii").splitlines()
