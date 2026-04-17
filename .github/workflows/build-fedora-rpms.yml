@@ -158,7 +158,7 @@ jobs:
     container:
       image: quay.io/fedora/fedora:${{ inputs.fedora_release }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       max-parallel: 30
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
