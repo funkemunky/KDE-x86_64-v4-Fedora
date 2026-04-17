@@ -23,7 +23,6 @@ at-spi2-core
 attr
 audiocd-kio
 audit
-basesystem
 bash
 bash-color-prompt
 bash-completion
@@ -36,7 +35,6 @@ brltty
 btrfs-progs
 bzip2
 cifs-utils
-cirrus-audio-firmware
 colord
 colord-kde
 compsize
@@ -69,7 +67,6 @@ exfatprogs
 ffmpegthumbs
 file
 filelight
-filesystem
 firefox
 firewall-config
 firewalld
@@ -186,7 +183,6 @@ mdadm
 mediawriter
 mesa-dri-drivers
 mesa-vulkan-drivers
-microcode_ctl
 minicom
 mpage
 mtr
@@ -254,7 +250,6 @@ qemu-guest-agent
 qrca
 quota
 realmd
-rootfiles
 rpm
 rsync
 rsyslog

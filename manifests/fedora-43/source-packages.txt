@@ -6,7 +6,6 @@ acl
 akonadi-server
 akregator
 alsa-lib
-alsa-sof-firmware
 alsa-utils
 ark
 at
@@ -15,7 +14,6 @@ attr
 audiocd-kio
 audit
 b43-fwcutter
-b43-openfwwf
 bash
 bash-completion
 bc
@@ -58,7 +56,6 @@ fedora-bookmarks
 ffmpegthumbs
 file
 filelight
-filesystem
 firefox
 firewalld
 flatpak-kcm
@@ -151,7 +148,6 @@ less
 libappindicator
 libglvnd
 libreoffice
-linux-firmware
 logrotate
 lrzsz
 lsof
@@ -162,7 +158,6 @@ mcelog
 mdadm
 mediawriter
 mesa
-microcode_ctl
 minicom
 mpage
 mtr
@@ -215,7 +210,6 @@ qemu
 qrca
 quota
 realmd
-rootfiles
 rpm
 rsync
 rsyslog
