@@ -58,6 +58,7 @@ jobs:
     outputs:
       matrix: ${{ steps.select.outputs.matrix }}
       package_count: ${{ steps.select.outputs.package_count }}
+      shard_count: ${{ steps.select.outputs.shard_count }}
     steps:
       - uses: actions/checkout@v4
 
@@ -122,17 +123,35 @@ jobs:
                   seen.add(package_name)
                   deduped.append(package_name)
 
-          matrix = [{"package": package_name} for package_name in deduped]
+          max_matrix = 256
+          if not deduped:
+              matrix = []
+          else:
+              shard_size = max(1, -(-len(deduped) // max_matrix))
+              shards = [
+                  deduped[index:index + shard_size]
+                  for index in range(0, len(deduped), shard_size)
+              ]
+              matrix = [
+                  {
+                      "shard": shard_index + 1,
+                      "packages": shard,
+                      "package_count": len(shard),
+                  }
+                  for shard_index, shard in enumerate(shards)
+              ]
 
           github_output = Path(os.environ["GITHUB_OUTPUT"])
           with github_output.open("a", encoding="utf-8") as fh:
               fh.write(f"matrix={json.dumps(matrix)}\n")
-              fh.write(f"package_count={len(matrix)}\n")
+              fh.write(f"package_count={len(deduped)}\n")
+              fh.write(f"shard_count={len(matrix)}\n")
           PY
 
       - name: Summarize selection
         run: |
           echo "Selected packages: ${{ steps.select.outputs.package_count }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Shards: ${{ steps.select.outputs.shard_count }}" >> "$GITHUB_STEP_SUMMARY"
           echo '${{ steps.select.outputs.matrix }}' >> "$GITHUB_STEP_SUMMARY"
 
   build:
@@ -158,95 +177,129 @@ jobs:
             fedpkg \
             findutils \
             git \
-            @development-tools
             nodejs \
             rpm-build \
             rpmdevtools \
             which
-            gobject-introspection \
-            gobject-introspection-devel \
-            python3 \
-            python3-packaging \
-            glib2-devel
 
-      - name: Show x86-64-v4 override flags
+      - name: Build shard packages
         env:
-          OPT_LEVEL: ${{ inputs.optimization_level }}
-          TARGET_MARCH: ${{ inputs.target_march }}
-        run: |
-          OPTFLAGS_OVERRIDE="${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
-          printf '%%optflags %s\n' "${OPTFLAGS_OVERRIDE}"
-
-      - name: Clone Fedora dist-git
-        env:
-          PACKAGE_NAME: ${{ matrix.package }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
           FEDORA_BRANCH: ${{ inputs.fedora_branch }}
-        run: |
-          git clone --depth 1 --branch "${FEDORA_BRANCH}" "https://src.fedoraproject.org/rpms/${PACKAGE_NAME}.git" "${PACKAGE_NAME}"
-
-      - name: Fetch lookaside sources
-        env:
-          PACKAGE_NAME: ${{ matrix.package }}
-        run: |
-          cd "${PACKAGE_NAME}"
-          fedpkg sources
-
-      - name: Install BuildRequires
-        env:
-          PACKAGE_NAME: ${{ matrix.package }}
-        run: |
-          cd "${PACKAGE_NAME}"
-          SPEC_FILE="$(find . -maxdepth 1 -name '*.spec' | head -n 1)"
-          test -n "${SPEC_FILE}"
-          dnf -y builddep "${SPEC_FILE}"
-
-      - name: Build SRPM and RPMs
-        env:
-          PACKAGE_NAME: ${{ matrix.package }}
           OPT_LEVEL: ${{ inputs.optimization_level }}
           TARGET_MARCH: ${{ inputs.target_march }}
         run: |
-          TOPDIR="${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}"
-          OPTFLAGS_OVERRIDE="${OPT_LEVEL} -flto=auto -ffat-lto-objects -fexceptions -g -grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang -Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 -Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 -fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 -m64 -march=${TARGET_MARCH} -mtune=generic -fasynchronous-unwind-tables -fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 -fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
-          mkdir -p "${TOPDIR}"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-          cd "${PACKAGE_NAME}"
-          SPEC_FILE="$(find . -maxdepth 1 -name '*.spec' | head -n 1)"
-          test -n "${SPEC_FILE}"
-          rpmbuild -ba "${SPEC_FILE}" \
-            --define "optflags ${OPTFLAGS_OVERRIDE}" \
-            --define "_topdir ${TOPDIR}" \
-            --define "_builddir ${TOPDIR}/BUILD" \
-            --define "_buildrootdir ${TOPDIR}/BUILDROOT" \
-            --define "_rpmdir ${TOPDIR}/RPMS" \
-            --define "_srcrpmdir ${TOPDIR}/SRPMS" \
-            --define "_sourcedir ${PWD}" \
-            --define "_specdir ${PWD}"
+          python3 <<'PY'
+          import json
+          import os
+          import shutil
+          import subprocess
+          from pathlib import Path
+
+          workspace = Path(os.environ["GITHUB_WORKSPACE"])
+          shard_index = int(os.environ["SHARD_INDEX"])
+          packages = json.loads(os.environ["PACKAGES_JSON"])
+          fedora_branch = os.environ["FEDORA_BRANCH"]
+          opt_level = os.environ["OPT_LEVEL"]
+          target_march = os.environ["TARGET_MARCH"]
+          optflags_override = (
+              f"{opt_level} -flto=auto -ffat-lto-objects -fexceptions -g "
+              "-grecord-gcc-switches -pipe -Wall -Wno-complain-wrong-lang "
+              "-Werror=format-security -Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 "
+              "-Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 "
+              "-fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 "
+              f"-m64 -march={target_march} -mtune=generic -fasynchronous-unwind-tables "
+              "-fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 "
+              "-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+          )
+          shard_root = workspace / "artifacts" / f"shard-{shard_index:03d}"
+          shard_root.mkdir(parents=True, exist_ok=True)
+          rpmbuild_root = workspace / ".rpmbuild"
+          rpmbuild_root.mkdir(parents=True, exist_ok=True)
+
+          for package_name in packages:
+              package_dir = workspace / package_name
+              if package_dir.exists():
+                  shutil.rmtree(package_dir)
+              subprocess.run(
+                  [
+                      "git",
+                      "clone",
+                      "--depth",
+                      "1",
+                      "--branch",
+                      fedora_branch,
+                      f"https://src.fedoraproject.org/rpms/{package_name}.git",
+                      str(package_dir),
+                  ],
+                  check=True,
+              )
+              subprocess.run(["fedpkg", "sources"], cwd=package_dir, check=True)
+              spec_file = next(package_dir.glob("*.spec"), None)
+              if spec_file is None:
+                  raise SystemExit(f"No spec file found for {package_name}")
+              subprocess.run(["dnf", "-y", "builddep", str(spec_file)], cwd=package_dir, check=True)
+              topdir = rpmbuild_root / package_name
+              for subdir in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
+                  (topdir / subdir).mkdir(parents=True, exist_ok=True)
+              subprocess.run(
+                  [
+                      "rpmbuild",
+                      "-ba",
+                      str(spec_file),
+                      "--define",
+                      f"optflags {optflags_override}",
+                      "--define",
+                      f"_topdir {topdir}",
+                      "--define",
+                      f"_builddir {topdir / 'BUILD'}",
+                      "--define",
+                      f"_buildrootdir {topdir / 'BUILDROOT'}",
+                      "--define",
+                      f"_rpmdir {topdir / 'RPMS'}",
+                      "--define",
+                      f"_srcrpmdir {topdir / 'SRPMS'}",
+                      "--define",
+                      f"_sourcedir {package_dir}",
+                      "--define",
+                      f"_specdir {package_dir}",
+                  ],
+                  cwd=package_dir,
+                  check=True,
+              )
+
+              outdir = shard_root / package_name
+              outdir.mkdir(parents=True, exist_ok=True)
+              for rpm_path in (topdir / "RPMS").rglob("*.rpm"):
+                  shutil.copy2(rpm_path, outdir / rpm_path.name)
+              for src_path in (topdir / "SRPMS").rglob("*.src.rpm"):
+                  shutil.copy2(src_path, outdir / src_path.name)
+              print(f"Built {package_name}")
+          PY
 
       - name: Collect artifacts
         env:
-          PACKAGE_NAME: ${{ matrix.package }}
+          SHARD_INDEX: ${{ matrix.shard }}
         run: |
-          OUTDIR="${GITHUB_WORKSPACE}/artifacts/${PACKAGE_NAME}"
-          mkdir -p "${OUTDIR}"
-          find "${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}/RPMS" -type f -name '*.rpm' -exec cp -v {} "${OUTDIR}/" \;
-          find "${GITHUB_WORKSPACE}/.rpmbuild/${PACKAGE_NAME}/SRPMS" -type f -name '*.src.rpm' -exec cp -v {} "${OUTDIR}/" \;
+          OUTDIR="${GITHUB_WORKSPACE}/artifacts/shard-${SHARD_INDEX}"
           ls -la "${OUTDIR}"
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-${{ matrix.package }}
-          path: artifacts/${{ matrix.package }}/
+          name: rpm-shard-${{ matrix.shard }}
+          path: artifacts/shard-${{ matrix.shard }}/
           if-no-files-found: error
 
       - name: Append build summary
         if: always()
         env:
-          PACKAGE_NAME: ${{ matrix.package }}
+          SHARD_INDEX: ${{ matrix.shard }}
         run: |
-          echo "### ${PACKAGE_NAME}" >> "$GITHUB_STEP_SUMMARY"
-          if [ -d "artifacts/${PACKAGE_NAME}" ]; then
-            find "artifacts/${PACKAGE_NAME}" -maxdepth 1 -type f | sort >> "$GITHUB_STEP_SUMMARY"
+          echo "### shard-${SHARD_INDEX}" >> "$GITHUB_STEP_SUMMARY"
+          if [ -d "artifacts/shard-${SHARD_INDEX}" ]; then
+            find "artifacts/shard-${SHARD_INDEX}" -maxdepth 2 -type f | sort >> "$GITHUB_STEP_SUMMARY"
           else
             echo "No artifacts collected." >> "$GITHUB_STEP_SUMMARY"
           fi
