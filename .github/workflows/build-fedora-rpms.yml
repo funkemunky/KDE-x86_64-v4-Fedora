@@ -174,10 +174,16 @@ jobs:
             fedpkg \
             findutils \
             git \
+            @development-tools
             nodejs \
             rpm-build \
             rpmdevtools \
             which
+            gobject-introspection \
+            gobject-introspection-devel \
+            python3 \
+            python3-packaging \
+            glib2-devel
 
       - name: Show x86-64-v4 override flags
         env:
