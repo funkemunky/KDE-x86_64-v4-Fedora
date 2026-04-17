@@ -1,0 +1,35 @@
+{
+  "releasever": "43",
+  "environment": "kde-desktop-environment",
+  "extra_groups": [
+    "firefox",
+    "kde-apps",
+    "kde-media",
+    "kde-pim",
+    "kde-spin-initial-setup",
+    "libreoffice"
+  ],
+  "exclude_groups": [
+    "admin-tools"
+  ],
+  "extra_packages": [
+    "fedora-release-kde",
+    "plasma-welcome-fedora",
+    "kde-l10n",
+    "fuse",
+    "mediawriter",
+    "libreoffice-draw",
+    "libreoffice-math"
+  ],
+  "exclude_packages": [
+    "tracker-miners",
+    "tracker",
+    "mariadb-server-utils",
+    "ktorrent",
+    "digikam",
+    "kipi-plugins",
+    "krusader",
+    "k3b"
+  ]
+}
+
