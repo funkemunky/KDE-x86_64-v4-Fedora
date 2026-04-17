@@ -152,6 +152,7 @@ jobs:
               matrix = [
                   {
                       "shard": shard_index + 1,
+                      "shard_label": f"{shard_index + 1:03d}",
                       "packages": shard,
                       "package_count": len(shard),
                   }
@@ -316,25 +317,23 @@ jobs:
 
       - name: Collect artifacts
         env:
-          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_LABEL: ${{ matrix.shard_label }}
         run: |
-          SHARD_LABEL=$(printf "%03d" "${SHARD_INDEX}")
           OUTDIR="${GITHUB_WORKSPACE}/artifacts/shard-${SHARD_LABEL}"
           ls -la "${OUTDIR}"
 
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-shard-${{ format('{0:03}', matrix.shard) }}
-          path: artifacts/shard-${{ format('{0:03}', matrix.shard) }}/
+          name: rpm-shard-${{ matrix.shard_label }}
+          path: artifacts/shard-${{ matrix.shard_label }}/
           if-no-files-found: error
 
       - name: Append build summary
         if: always()
         env:
-          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_LABEL: ${{ matrix.shard_label }}
         run: |
-          SHARD_LABEL=$(printf "%03d" "${SHARD_INDEX}")
           echo "### shard-${SHARD_LABEL}" >> "$GITHUB_STEP_SUMMARY"
           if [ -d "artifacts/shard-${SHARD_LABEL}" ]; then
             find "artifacts/shard-${SHARD_LABEL}" -maxdepth 2 -type f | sort >> "$GITHUB_STEP_SUMMARY"
