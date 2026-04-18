@@ -13,4 +13,6 @@ RUN dnf -y upgrade --refresh \
         python3 \
         rpm-build \
         rpmdevtools \
+        @kde-desktop \
+        @development-tools \
     && dnf clean all
