@@ -68,6 +68,8 @@ jobs:
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
+      - name: Pre-install Node.js and Git
+        run: dnf -y install nodejs git
       - uses: actions/checkout@v4
       - name: Install build tools
         run: |
