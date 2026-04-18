@@ -65,15 +65,35 @@ jobs:
     if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
-      image: fedora:43
+      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
+      - name: Restore DNF cache
+        uses: actions/cache@v4
+        with:
+          path: /var/cache/dnf
+          key: fedora43-dnf-${{ hashFiles('.github/workflows/build-v3-rpms.yml', 'ci/fedora-rpm-builder.Containerfile') }}
+          restore-keys: |
+            fedora43-dnf-
       - name: Install build tools
         run: |
+          if command -v fedpkg >/dev/null 2>&1 \
+            && command -v rpmbuild >/dev/null 2>&1 \
+            && command -v rpmdev-setuptree >/dev/null 2>&1 \
+            && command -v git >/dev/null 2>&1 \
+            && command -v python3 >/dev/null 2>&1 \
+            && rpm -q dnf-plugins-core >/dev/null 2>&1
+          then
+            echo "Build tools already present; skipping install."
+            exit 0
+          fi
+
+          mkdir -p /etc/dnf/dnf.conf.d
+          printf '%s\n' 'keepcache=True' 'max_parallel_downloads=10' > /etc/dnf/dnf.conf.d/99-ci-cache.conf
           dnf -y install 'dnf-command(builddep)' fedpkg rpm-build rpmdevtools git python3
 
       - name: Build shard packages
