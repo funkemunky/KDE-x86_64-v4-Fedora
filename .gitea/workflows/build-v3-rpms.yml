@@ -1,0 +1,183 @@
+name: Build Fedora x86_64-v3 RPMs (Gitea)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'packages.txt'
+      - '.gitea/workflows/build-v3-rpms.yml'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.select.outputs.matrix }}
+      package_count: ${{ steps.select.outputs.package_count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: select
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          packages_file = Path("packages.txt")
+          if not packages_file.exists():
+              print("::error::packages.txt not found")
+              exit(1)
+
+          packages = [
+              line.strip()
+              for line in packages_file.read_text(encoding="utf-8").splitlines()
+              if line.strip() and not line.startswith("#")
+          ]
+
+          # Gitea Actions might have different limits, but 256 is generally safe for matrix
+          max_matrix = 256
+          matrix = []
+          if packages:
+              shard_size = max(1, -(-len(packages) // max_matrix))
+              shards = [
+                  packages[index:index + shard_size]
+                  for index in range(0, len(packages), shard_size)
+              ]
+              matrix = [
+                  {
+                      "shard": shard_index + 1,
+                      "shard_label": f"{shard_index + 1:03d}",
+                      "packages": shard,
+                  }
+                  for shard_index, shard in enumerate(shards)
+              ]
+
+          # Gitea Actions supports GITHUB_OUTPUT
+          output_file = os.environ.get("GITHUB_OUTPUT")
+          if output_file:
+              with open(output_file, "a") as fh:
+                  fh.write(f"matrix={json.dumps(matrix)}\n")
+                  fh.write(f"package_count={len(packages)}\n")
+          else:
+              print(f"::set-output name=matrix::{json.dumps(matrix)}")
+              print(f"::set-output name=package_count::{len(packages)}")
+          PY
+
+  build:
+    needs: prepare
+    if: ${{ needs.prepare.outputs.package_count != '0' }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:43
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: |
+          dnf -y install 'dnf-command(builddep)' fedpkg rpm-build rpmdevtools git python3
+
+      - name: Build shard packages
+        env:
+          SHARD_INDEX: ${{ matrix.shard }}
+          PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
+          FEDORA_BRANCH: f43
+          TARGET_MARCH: x86-64-v3
+        run: |
+          python3 <<'PY'
+          import json
+          import os
+          import shutil
+          import subprocess
+          import time
+          from pathlib import Path
+
+          workspace = Path(os.environ.get("GITHUB_WORKSPACE", "."))
+          shard_index = int(os.environ["SHARD_INDEX"])
+          packages = json.loads(os.environ["PACKAGES_JSON"])
+          fedora_branch = os.environ["FEDORA_BRANCH"]
+          target_march = os.environ["TARGET_MARCH"]
+          
+          # Standard Fedora optflags with march override
+          optflags_override = (
+              f"-O2 -flto=auto -ffat-lto-objects -fexceptions -g "
+              "-grecord-gcc-switches -pipe -Wall -Werror=format-security "
+              "-Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 "
+              "-Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 "
+              "-fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 "
+              f"-m64 -march={target_march} -mtune=generic -fasynchronous-unwind-tables "
+              "-fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 "
+              "-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+          )
+          
+          shard_root = workspace / "artifacts" / f"shard-{shard_index:03d}"
+          shard_root.mkdir(parents=True, exist_ok=True)
+          rpmbuild_root = workspace / ".rpmbuild"
+          rpmbuild_root.mkdir(parents=True, exist_ok=True)
+
+          def run_with_retry(command, *, cwd=None, cleanup_path=None, attempts=3):
+              for attempt in range(1, attempts + 1):
+                  if cleanup_path is not None and cleanup_path.exists():
+                      shutil.rmtree(cleanup_path)
+                  try:
+                      subprocess.run(command, cwd=cwd, check=True)
+                      return
+                  except subprocess.CalledProcessError:
+                      if attempt == attempts:
+                          raise
+                      time.sleep(5 * attempt)
+
+          for package_name in packages:
+              package_dir = workspace / package_name
+              run_with_retry(
+                  [
+                      "git", "clone", "--depth", "1", "--branch", fedora_branch,
+                      f"https://src.fedoraproject.org/rpms/{package_name}.git",
+                      str(package_dir),
+                  ],
+                  cleanup_path=package_dir,
+              )
+              
+              run_with_retry(["fedpkg", "sources"], cwd=package_dir)
+              
+              spec_file = next(package_dir.glob("*.spec"), None)
+              if not spec_file:
+                  print(f"No spec file for {package_name}")
+                  continue
+                  
+              subprocess.run(["dnf", "-y", "builddep", str(spec_file)], check=True)
+              
+              topdir = rpmbuild_root / package_name
+              for subdir in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
+                  (topdir / subdir).mkdir(parents=True, exist_ok=True)
+                  
+              subprocess.run(
+                  [
+                      "rpmbuild", "-ba", str(spec_file),
+                      "--define", f"optflags {optflags_override}",
+                      "--define", f"_topdir {topdir}",
+                      "--define", f"_builddir {topdir / 'BUILD'}",
+                      "--define", f"_buildrootdir {topdir / 'BUILDROOT'}",
+                      "--define", f"_rpmdir {topdir / 'RPMS'}",
+                      "--define", f"_srcrpmdir {topdir / 'SRPMS'}",
+                      "--define", f"_sourcedir {package_dir}",
+                      "--define", f"_specdir {package_dir}",
+                  ],
+                  check=True,
+              )
+
+              for rpm_path in (topdir / "RPMS").rglob("*.rpm"):
+                  shutil.copy2(rpm_path, shard_root / rpm_path.name)
+              for src_path in (topdir / "SRPMS").rglob("*.src.rpm"):
+                  shutil.copy2(src_path, shard_root / src_path.name)
+              print(f"Built {package_name}")
+          PY
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-shard-${{ matrix.shard_label }}
+          path: artifacts/shard-${{ matrix.shard_label }}/
+          if-no-files-found: error
