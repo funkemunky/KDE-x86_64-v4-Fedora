@@ -273,7 +273,7 @@ jobs:
           PY
 
       - name: Upload RPM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard }}
           path: artifacts/${{ matrix.arch }}-shard-${{ matrix.shard }}/
