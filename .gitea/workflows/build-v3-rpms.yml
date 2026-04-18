@@ -8,68 +8,143 @@ on:
       - '.gitea/workflows/build-v3-rpms.yml'
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.select.outputs.matrix }}
-      package_count: ${{ steps.select.outputs.package_count }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: select
-        run: |
-          python3 <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          packages_file = Path("packages.txt")
-          if not packages_file.exists():
-              print("::error::packages.txt not found")
-              exit(1)
-
-          packages = [
-              line.strip()
-              for line in packages_file.read_text(encoding="utf-8").splitlines()
-              if line.strip() and not line.startswith("#")
-          ]
-
-          # Limit matrix size to avoid GitHub Actions limits
-          max_matrix = 256
-          matrix = []
-          if packages:
-              shard_size = max(1, -(-len(packages) // max_matrix))
-              shards = [
-                  packages[index:index + shard_size]
-                  for index in range(0, len(packages), shard_size)
-              ]
-              arches = ["x86-64-v3", "x86-64-v4"]
-              matrix = [
-                  {
-                      "arch": arch,
-                      "shard": str(shard_index + 1),
-                      "shard_label": f"{shard_index + 1:03d}",
-                      "packages_json": json.dumps(shard),
-                  }
-                  for arch in arches
-                  for shard_index, shard in enumerate(shards)
-              ]
-
-          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              fh.write(f"matrix={json.dumps(matrix)}\n")
-              fh.write(f"package_count={len(packages)}\n")
-          PY
-
   build:
-    needs: prepare
-    if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
       image: fedora:43
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+        arch: [x86-64-v3, x86-64-v4]
+        shard:
+          - "001"
+          - "002"
+          - "003"
+          - "004"
+          - "005"
+          - "006"
+          - "007"
+          - "008"
+          - "009"
+          - "010"
+          - "011"
+          - "012"
+          - "013"
+          - "014"
+          - "015"
+          - "016"
+          - "017"
+          - "018"
+          - "019"
+          - "020"
+          - "021"
+          - "022"
+          - "023"
+          - "024"
+          - "025"
+          - "026"
+          - "027"
+          - "028"
+          - "029"
+          - "030"
+          - "031"
+          - "032"
+          - "033"
+          - "034"
+          - "035"
+          - "036"
+          - "037"
+          - "038"
+          - "039"
+          - "040"
+          - "041"
+          - "042"
+          - "043"
+          - "044"
+          - "045"
+          - "046"
+          - "047"
+          - "048"
+          - "049"
+          - "050"
+          - "051"
+          - "052"
+          - "053"
+          - "054"
+          - "055"
+          - "056"
+          - "057"
+          - "058"
+          - "059"
+          - "060"
+          - "061"
+          - "062"
+          - "063"
+          - "064"
+          - "065"
+          - "066"
+          - "067"
+          - "068"
+          - "069"
+          - "070"
+          - "071"
+          - "072"
+          - "073"
+          - "074"
+          - "075"
+          - "076"
+          - "077"
+          - "078"
+          - "079"
+          - "080"
+          - "081"
+          - "082"
+          - "083"
+          - "084"
+          - "085"
+          - "086"
+          - "087"
+          - "088"
+          - "089"
+          - "090"
+          - "091"
+          - "092"
+          - "093"
+          - "094"
+          - "095"
+          - "096"
+          - "097"
+          - "098"
+          - "099"
+          - "100"
+          - "101"
+          - "102"
+          - "103"
+          - "104"
+          - "105"
+          - "106"
+          - "107"
+          - "108"
+          - "109"
+          - "110"
+          - "111"
+          - "112"
+          - "113"
+          - "114"
+          - "115"
+          - "116"
+          - "117"
+          - "118"
+          - "119"
+          - "120"
+          - "121"
+          - "122"
+          - "123"
+          - "124"
+          - "125"
+          - "126"
+          - "127"
+          - "128"
     steps:
       - name: Pre-install Node.js and Git
         run: dnf -y install nodejs git
@@ -81,12 +156,10 @@ jobs:
       - name: Build shard packages
         env:
           SHARD_INDEX: ${{ matrix.shard }}
-          PACKAGES_JSON: ${{ matrix.packages_json }}
           FEDORA_BRANCH: f43
           TARGET_MARCH: ${{ matrix.arch }}
         run: |
           python3 <<'PY'
-          import json
           import os
           import shutil
           import subprocess
@@ -95,9 +168,33 @@ jobs:
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
           shard_index = int(os.environ["SHARD_INDEX"])
-          packages = json.loads(os.environ["PACKAGES_JSON"])
           fedora_branch = os.environ["FEDORA_BRANCH"]
           target_march = os.environ["TARGET_MARCH"]
+          packages_file = workspace / "packages.txt"
+
+          if not packages_file.exists():
+              print("packages.txt not found")
+              raise SystemExit(1)
+
+          all_packages = [
+              line.strip()
+              for line in packages_file.read_text(encoding="utf-8").splitlines()
+              if line.strip() and not line.startswith("#")
+          ]
+
+          max_shards = 128
+          shard_count = min(len(all_packages), max_shards)
+          if shard_count == 0 or shard_index > shard_count:
+              print(
+                  f"Skipping shard {shard_index:03d} for {target_march}; "
+                  f"package_count={len(all_packages)} shard_count={shard_count}"
+              )
+              raise SystemExit(0)
+
+          shard_size = max(1, -(-len(all_packages) // shard_count))
+          start_index = (shard_index - 1) * shard_size
+          end_index = start_index + shard_size
+          packages = all_packages[start_index:end_index]
           
           # Standard Fedora optflags with march override
           # We'll use a simplified version of the override from the other workflow
@@ -178,6 +275,6 @@ jobs:
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard_label }}
-          path: artifacts/${{ matrix.arch }}-shard-${{ matrix.shard_label }}/
-          if-no-files-found: error
+          name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard }}
+          path: artifacts/${{ matrix.arch }}-shard-${{ matrix.shard }}/
+          if-no-files-found: ignore
