@@ -2,6 +2,12 @@ name: Build Fedora x86_64-v3 RPMs
 
 on:
   workflow_dispatch:
+    inputs:
+      package_input:
+        description: "Optional comma, space, or newline separated package list. Leave blank to use packages.txt."
+        required: false
+        default: ""
+        type: string
   push:
     paths:
       - 'packages.txt'
@@ -21,22 +27,33 @@ jobs:
       - uses: actions/checkout@v4
 
       - id: select
+        env:
+          PACKAGE_INPUT: ${{ inputs.package_input }}
         run: |
           python3 <<'PY'
           import json
           import os
+          import re
           from pathlib import Path
 
           packages_file = Path("packages.txt")
-          if not packages_file.exists():
+          package_input = os.environ.get("PACKAGE_INPUT", "")
+          if not package_input.strip() and not packages_file.exists():
               print("::error::packages.txt not found")
               exit(1)
 
-          packages = [
-              line.strip()
-              for line in packages_file.read_text(encoding="utf-8").splitlines()
-              if line.strip() and not line.startswith("#")
-          ]
+          if package_input.strip():
+              packages = [
+                  entry
+                  for entry in re.split(r"[\s,]+", package_input.strip())
+                  if entry
+              ]
+          else:
+              packages = [
+                  line.strip()
+                  for line in packages_file.read_text(encoding="utf-8").splitlines()
+                  if line.strip() and not line.startswith("#")
+              ]
 
           # Limit matrix size to avoid GitHub Actions limits
           max_matrix = 256
