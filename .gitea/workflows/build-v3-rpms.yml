@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86-64-v3, x86-64-v4]
+        arch: [x86-64-v3]
         shard:
           - "001"
           - "002"
