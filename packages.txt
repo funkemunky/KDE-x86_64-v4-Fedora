@@ -61,7 +61,6 @@ pam-kwallet
 plasma-breeze
 plasma-desktop
 plasma-discover
-plasma-discover-notifier
 plasma-disks
 plasma-drkonqi
 plasma-nm
