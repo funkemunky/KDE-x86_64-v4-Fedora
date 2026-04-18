@@ -236,8 +236,20 @@ jobs:
             --repo-name 'Fedora 43 KDE x86_64-v3'
 
       - name: Upload DNF repository artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dnf-repo-x86-64-v3
-          path: repo/fedora43-x86-64-v3/
-          if-no-files-found: error
+        env:
+          NEXUS_BASE_URL: https://nexus.funkemunky.cc
+          NEXUS_REPOSITORY: dnf-repo-x86-64-v3
+          NEXUS_USER: ${{ secrets.nexusUser }}
+          NEXUS_PASSWORD: ${{ secrets.nexusPassword }}
+        run: |
+          test -n "${NEXUS_USER}"
+          test -n "${NEXUS_PASSWORD}"
+          REPO_ROOT="repo/fedora43-x86-64-v3"
+          find "${REPO_ROOT}" -type f | while read -r FILEPATH; do
+            RELATIVE_PATH="${FILEPATH#${REPO_ROOT}/}"
+            REMOTE_URL="${NEXUS_BASE_URL}/repository/${NEXUS_REPOSITORY}/${RELATIVE_PATH}"
+            curl --fail --show-error --silent \
+              --user "${NEXUS_USER}:${NEXUS_PASSWORD}" \
+              --upload-file "${FILEPATH}" \
+              "${REMOTE_URL}"
+          done
