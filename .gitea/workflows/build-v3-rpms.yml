@@ -1,4 +1,4 @@
-name: Build Fedora x86_64-v3/v4 RPMs (Gitea)
+name: Build Fedora x86_64-v3 RPMs (Gitea)
 
 on:
   workflow_dispatch:
@@ -34,7 +34,7 @@ jobs:
               if line.strip() and not line.startswith("#")
           ]
 
-          # Gitea Actions might have different limits, but 256 is generally safe for matrix
+          # Limit matrix size to avoid GitHub Actions limits
           max_matrix = 256
           matrix = []
           if packages:
@@ -52,15 +52,9 @@ jobs:
                   for shard_index, shard in enumerate(shards)
               ]
 
-          # Gitea Actions supports GITHUB_OUTPUT
-          output_file = os.environ.get("GITHUB_OUTPUT")
-          if output_file:
-              with open(output_file, "a") as fh:
-                  fh.write(f"matrix={json.dumps(matrix)}\n")
-                  fh.write(f"package_count={len(packages)}\n")
-          else:
-              print(f"::set-output name=matrix::{json.dumps(matrix)}")
-              print(f"::set-output name=package_count::{len(packages)}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
+              fh.write(f"matrix={json.dumps(matrix)}\n")
+              fh.write(f"package_count={len(packages)}\n")
           PY
 
   build:
@@ -72,11 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86-64-v3, x86-64-v4]
-        shard_data: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
-      - name: Pre-install Node.js and Git
-        run: dnf -y install nodejs git
       - uses: actions/checkout@v4
       - name: Install build tools
         run: |
@@ -84,10 +75,10 @@ jobs:
 
       - name: Build shard packages
         env:
-          SHARD_INDEX: ${{ matrix.shard_data.shard }}
-          PACKAGES_JSON: ${{ toJSON(matrix.shard_data.packages) }}
+          SHARD_INDEX: ${{ matrix.shard }}
+          PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
           FEDORA_BRANCH: f43
-          TARGET_MARCH: ${{ matrix.arch }}
+          TARGET_MARCH: x86-64-v3
         run: |
           python3 <<'PY'
           import json
@@ -97,13 +88,14 @@ jobs:
           import time
           from pathlib import Path
 
-          workspace = Path(os.environ.get("GITHUB_WORKSPACE", "."))
+          workspace = Path(os.environ["GITHUB_WORKSPACE"])
           shard_index = int(os.environ["SHARD_INDEX"])
           packages = json.loads(os.environ["PACKAGES_JSON"])
           fedora_branch = os.environ["FEDORA_BRANCH"]
           target_march = os.environ["TARGET_MARCH"]
           
           # Standard Fedora optflags with march override
+          # We'll use a simplified version of the override from the other workflow
           optflags_override = (
               f"-O2 -flto=auto -ffat-lto-objects -fexceptions -g "
               "-grecord-gcc-switches -pipe -Wall -Werror=format-security "
@@ -142,20 +134,20 @@ jobs:
                   ],
                   cleanup_path=package_dir,
               )
-              
+          
               run_with_retry(["fedpkg", "sources"], cwd=package_dir)
-              
+          
               spec_file = next(package_dir.glob("*.spec"), None)
               if not spec_file:
                   print(f"No spec file for {package_name}")
                   continue
-                  
+          
               subprocess.run(["dnf", "-y", "builddep", str(spec_file)], check=True)
-              
+          
               topdir = rpmbuild_root / package_name
               for subdir in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
                   (topdir / subdir).mkdir(parents=True, exist_ok=True)
-                  
+          
               subprocess.run(
                   [
                       "rpmbuild", "-ba", str(spec_file),
@@ -181,6 +173,6 @@ jobs:
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard_data.shard_label }}
-          path: artifacts/shard-${{ matrix.shard_data.shard_label }}/
+          name: rpm-shard-${{ matrix.shard_label }}
+          path: artifacts/shard-${{ matrix.shard_label }}/
           if-no-files-found: error
