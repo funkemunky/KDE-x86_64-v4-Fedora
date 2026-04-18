@@ -1,0 +1,62 @@
+name: Publish RPM Builder Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - 'ci/fedora-rpm-builder.Containerfile'
+      - '.github/workflows/publish-rpm-builder-image.yml'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Derive image coordinates
+        id: vars
+        run: |
+          owner_lc="${GITHUB_REPOSITORY_OWNER,,}"
+          repo_name="${GITHUB_REPOSITORY#*/}"
+          repo_lc="${repo_name,,}"
+          echo "image=ghcr.io/${owner_lc}/${repo_lc}-rpm-builder" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.vars.outputs.image }}
+          tags: |
+            type=raw,value=latest
+            type=sha
+          labels: |
+            org.opencontainers.image.title=Fedora RPM Builder
+            org.opencontainers.image.description=Fedora RPM builder image for KDE x86_64 v3/v4 package workflows
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ci/fedora-rpm-builder.Containerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
