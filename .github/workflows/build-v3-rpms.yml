@@ -252,7 +252,7 @@ jobs:
             --repo-id fedora43-kde-x86-64-v3 \
             --repo-name 'Fedora 43 KDE x86_64-v3'
 
-      - name: Upload DNF repository artifact
+      - name: Upload RPMs to Nexus YUM repository
         env:
           NEXUS_BASE_URL: https://nexus.funkemunky.cc
           NEXUS_REPOSITORY: dnf-repo-x86-64-v3
@@ -261,10 +261,10 @@ jobs:
         run: |
           test -n "${NEXUS_USER}"
           test -n "${NEXUS_PASSWORD}"
-          REPO_ROOT="repo/fedora43-x86-64-v3"
-          find "${REPO_ROOT}" -type f | while read -r FILEPATH; do
-            RELATIVE_PATH="${FILEPATH#${REPO_ROOT}/}"
-            REMOTE_URL="${NEXUS_BASE_URL}/repository/${NEXUS_REPOSITORY}/${RELATIVE_PATH}"
+          PACKAGE_ROOT="repo/fedora43-x86-64-v3/packages"
+          find "${PACKAGE_ROOT}" -type f -name '*.rpm' | while read -r FILEPATH; do
+            FILENAME="$(basename "${FILEPATH}")"
+            REMOTE_URL="${NEXUS_BASE_URL}/repository/${NEXUS_REPOSITORY}/${FILENAME}"
             curl --fail --show-error --silent \
               --user "${NEXUS_USER}:${NEXUS_PASSWORD}" \
               --upload-file "${FILEPATH}" \
