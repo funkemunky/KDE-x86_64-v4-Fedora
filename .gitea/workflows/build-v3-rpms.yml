@@ -66,7 +66,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+        arch: [x86-64-v3, x86-64-v4]
+        shard_data: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - name: Pre-install Node.js and Git
         run: dnf -y install nodejs git
@@ -77,10 +78,10 @@ jobs:
 
       - name: Build shard packages
         env:
-          SHARD_INDEX: ${{ matrix.shard }}
-          PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
+          SHARD_INDEX: ${{ matrix.shard_data.shard }}
+          PACKAGES_JSON: ${{ toJSON(matrix.shard_data.packages) }}
           FEDORA_BRANCH: f43
-          TARGET_MARCH: x86-64-v3
+          TARGET_MARCH: ${{ matrix.arch }}
         run: |
           python3 <<'PY'
           import json
@@ -109,7 +110,7 @@ jobs:
               "-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
           )
           
-          shard_root = workspace / "artifacts" / f"shard-{shard_index:03d}"
+          shard_root = workspace / "artifacts" / f"{target_march}-shard-{shard_index:03d}"
           shard_root.mkdir(parents=True, exist_ok=True)
           rpmbuild_root = workspace / ".rpmbuild"
           rpmbuild_root.mkdir(parents=True, exist_ok=True)
@@ -175,6 +176,6 @@ jobs:
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-shard-${{ matrix.shard_label }}
-          path: artifacts/shard-${{ matrix.shard_label }}/
+          name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard_data.shard_label }}
+          path: artifacts/${{ matrix.arch }}-shard-${{ matrix.shard_data.shard_label }}/
           if-no-files-found: error
