@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'packages.txt'
+      - 'ci/assemble-dnf-repo.py'
       - '.gitea/workflows/build-v3-rpms.yml'
 
 jobs:
@@ -300,3 +301,59 @@ jobs:
           name: rpm-${{ matrix.arch }}-shard-${{ matrix.shard }}
           path: artifacts/${{ matrix.arch }}-shard-${{ matrix.shard }}/
           if-no-files-found: ignore
+
+  assemble-repo:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86-64-v3
+            repo_id: fedora43-kde-x86-64-v3
+          - arch: x86-64-v4
+            repo_id: fedora43-kde-x86-64-v4
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download RPM shard artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: downloaded-rpms
+
+      - name: Stage matching shard artifacts
+        run: |
+          mkdir -p filtered-rpms
+          shopt -s nullglob
+          for artifact_dir in downloaded-rpms/rpm-${{ matrix.arch }}-shard-*; do
+            cp -a "$artifact_dir"/. filtered-rpms/
+          done
+
+      - name: Install repo assembly tools
+        run: |
+          if command -v createrepo_c >/dev/null 2>&1
+          then
+            echo "createrepo_c already present; skipping install."
+            exit 0
+          fi
+
+          mkdir -p /etc/dnf/dnf.conf.d
+          printf '%s\n' 'keepcache=True' 'max_parallel_downloads=10' > /etc/dnf/dnf.conf.d/99-ci-cache.conf
+          dnf -y install createrepo_c
+
+      - name: Assemble DNF repository
+        run: |
+          python3 ci/assemble-dnf-repo.py \
+            --input-dir filtered-rpms \
+            --output-dir repo/${{ matrix.arch }} \
+            --repo-id ${{ matrix.repo_id }} \
+            --repo-name 'Fedora 43 KDE ${{ matrix.arch }}'
+
+      - name: Upload DNF repository artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dnf-repo-${{ matrix.arch }}
+          path: repo/${{ matrix.arch }}/
+          if-no-files-found: error

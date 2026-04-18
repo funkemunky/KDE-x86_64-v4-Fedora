@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - 'packages.txt'
+      - 'ci/assemble-dnf-repo.py'
       - '.github/workflows/build-v3-rpms.yml'
 
 permissions:
@@ -198,4 +199,45 @@ jobs:
         with:
           name: rpm-shard-${{ matrix.shard_label }}
           path: artifacts/shard-${{ matrix.shard_label }}/
+          if-no-files-found: error
+
+  assemble-repo:
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download RPM shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: rpm-shard-*
+          path: downloaded-rpms
+
+      - name: Install repo assembly tools
+        run: |
+          if command -v createrepo_c >/dev/null 2>&1
+          then
+            echo "createrepo_c already present; skipping install."
+            exit 0
+          fi
+
+          mkdir -p /etc/dnf/dnf.conf.d
+          printf '%s\n' 'keepcache=True' 'max_parallel_downloads=10' > /etc/dnf/dnf.conf.d/99-ci-cache.conf
+          dnf -y install createrepo_c
+
+      - name: Assemble DNF repository
+        run: |
+          python3 ci/assemble-dnf-repo.py \
+            --input-dir downloaded-rpms \
+            --output-dir repo/fedora43-x86-64-v3 \
+            --repo-id fedora43-kde-x86-64-v3 \
+            --repo-name 'Fedora 43 KDE x86_64-v3'
+
+      - name: Upload DNF repository artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dnf-repo-x86-64-v3
+          path: repo/fedora43-x86-64-v3/
           if-no-files-found: error
