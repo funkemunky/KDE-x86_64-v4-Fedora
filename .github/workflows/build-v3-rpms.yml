@@ -264,9 +264,10 @@ jobs:
           PACKAGE_ROOT="repo/fedora43-x86-64-v3/packages"
           find "${PACKAGE_ROOT}" -type f -name '*.rpm' | while read -r FILEPATH; do
             FILENAME="$(basename "${FILEPATH}")"
-            REMOTE_URL="${NEXUS_BASE_URL}/repository/${NEXUS_REPOSITORY}/${FILENAME}"
             curl --fail --show-error --silent \
               --user "${NEXUS_USER}:${NEXUS_PASSWORD}" \
-              --upload-file "${FILEPATH}" \
-              "${REMOTE_URL}"
+              -X POST "${NEXUS_BASE_URL}/service/rest/v1/components?repository=${NEXUS_REPOSITORY}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "yum.asset=@${FILEPATH};type=application/x-rpm" \
+              -F "yum.asset.filename=${FILENAME}"
           done
