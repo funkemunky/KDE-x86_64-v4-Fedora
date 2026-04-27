@@ -19,74 +19,142 @@ on:
       - 'SPECS/**'
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.select.outputs.matrix }}
-      package_count: ${{ steps.select.outputs.package_count }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - id: select
-        env:
-          PACKAGE_INPUT: ${{ inputs.package_input }}
-        run: |
-          python3 <<'PY'
-          import json
-          import os
-          import re
-          from pathlib import Path
-
-          packages_file = Path("packages.txt")
-          package_input = os.environ.get("PACKAGE_INPUT", "")
-          if not package_input.strip() and not packages_file.exists():
-              print("packages.txt not found")
-              raise SystemExit(1)
-
-          if package_input.strip():
-              packages = [
-                  entry
-                  for entry in re.split(r"[\s,]+", package_input.strip())
-                  if entry
-              ]
-          else:
-              packages = [
-                  line.strip()
-                  for line in packages_file.read_text(encoding="utf-8").splitlines()
-                  if line.strip() and not line.startswith("#")
-              ]
-
-          max_matrix = 128
-          matrix = []
-          if packages:
-              shard_size = max(1, -(-len(packages) // max_matrix))
-              shards = [
-                  packages[index:index + shard_size]
-                  for index in range(0, len(packages), shard_size)
-              ]
-              matrix = [
-                  {
-                      "shard_label": f"{shard_index + 1:03d}",
-                      "packages": shard,
-                  }
-                  for shard_index, shard in enumerate(shards)
-              ]
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
-              handle.write(f"matrix={json.dumps(matrix)}\n")
-              handle.write(f"package_count={len(packages)}\n")
-          PY
-
   validate-srpms:
-    needs: prepare
-    if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
     strategy:
       fail-fast: false
       matrix:
-        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+        shard:
+          - "001"
+          - "002"
+          - "003"
+          - "004"
+          - "005"
+          - "006"
+          - "007"
+          - "008"
+          - "009"
+          - "010"
+          - "011"
+          - "012"
+          - "013"
+          - "014"
+          - "015"
+          - "016"
+          - "017"
+          - "018"
+          - "019"
+          - "020"
+          - "021"
+          - "022"
+          - "023"
+          - "024"
+          - "025"
+          - "026"
+          - "027"
+          - "028"
+          - "029"
+          - "030"
+          - "031"
+          - "032"
+          - "033"
+          - "034"
+          - "035"
+          - "036"
+          - "037"
+          - "038"
+          - "039"
+          - "040"
+          - "041"
+          - "042"
+          - "043"
+          - "044"
+          - "045"
+          - "046"
+          - "047"
+          - "048"
+          - "049"
+          - "050"
+          - "051"
+          - "052"
+          - "053"
+          - "054"
+          - "055"
+          - "056"
+          - "057"
+          - "058"
+          - "059"
+          - "060"
+          - "061"
+          - "062"
+          - "063"
+          - "064"
+          - "065"
+          - "066"
+          - "067"
+          - "068"
+          - "069"
+          - "070"
+          - "071"
+          - "072"
+          - "073"
+          - "074"
+          - "075"
+          - "076"
+          - "077"
+          - "078"
+          - "079"
+          - "080"
+          - "081"
+          - "082"
+          - "083"
+          - "084"
+          - "085"
+          - "086"
+          - "087"
+          - "088"
+          - "089"
+          - "090"
+          - "091"
+          - "092"
+          - "093"
+          - "094"
+          - "095"
+          - "096"
+          - "097"
+          - "098"
+          - "099"
+          - "100"
+          - "101"
+          - "102"
+          - "103"
+          - "104"
+          - "105"
+          - "106"
+          - "107"
+          - "108"
+          - "109"
+          - "110"
+          - "111"
+          - "112"
+          - "113"
+          - "114"
+          - "115"
+          - "116"
+          - "117"
+          - "118"
+          - "119"
+          - "120"
+          - "121"
+          - "122"
+          - "123"
+          - "124"
+          - "125"
+          - "126"
+          - "127"
+          - "128"
     steps:
       - uses: actions/checkout@v4
 
@@ -96,20 +164,50 @@ jobs:
 
       - name: Generate shard SRPMs
         env:
-          PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
-          SHARD_LABEL: ${{ matrix.shard_label }}
+          PACKAGE_INPUT: ${{ inputs.package_input }}
+          SHARD_LABEL: ${{ matrix.shard }}
+          MAX_SHARDS: "128"
         run: |
           python3 <<'PY'
-          import json
           import os
+          import re
           import subprocess
           from pathlib import Path
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
-          shard_label = os.environ.get("SHARD_LABEL") or "000"
-          packages = json.loads(os.environ.get("PACKAGES_JSON") or "[]")
-          if packages is None:
-              packages = []
+          packages_file = workspace / "packages.txt"
+          package_input = os.environ.get("PACKAGE_INPUT", "")
+          shard_label = os.environ["SHARD_LABEL"]
+          shard_index = int(shard_label)
+          max_shards = int(os.environ["MAX_SHARDS"])
+
+          if package_input.strip():
+              all_packages = [
+                  entry
+                  for entry in re.split(r"[\s,]+", package_input.strip())
+                  if entry
+              ]
+          else:
+              if not packages_file.exists():
+                  raise SystemExit("packages.txt not found")
+              all_packages = [
+                  line.strip()
+                  for line in packages_file.read_text(encoding="utf-8").splitlines()
+                  if line.strip() and not line.startswith("#")
+              ]
+
+          shard_count = min(len(all_packages), max_shards)
+          if shard_count == 0 or shard_index > shard_count:
+              print(
+                  f"Skipping shard {shard_label}; "
+                  f"package_count={len(all_packages)} shard_count={shard_count}"
+              )
+              raise SystemExit(0)
+
+          shard_size = max(1, -(-len(all_packages) // shard_count))
+          start_index = (shard_index - 1) * shard_size
+          end_index = start_index + shard_size
+          packages = all_packages[start_index:end_index]
 
           outdir = workspace / "artifacts" / f"srpm-shard-{shard_label}"
           outdir.mkdir(parents=True, exist_ok=True)
