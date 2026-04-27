@@ -1,4 +1,4 @@
-name: Build Fedora x86_64-v3 RPMs
+name: Validate Fedora x86_64-v3 Copr SRPMs
 
 on:
   workflow_dispatch:
@@ -8,11 +8,29 @@ on:
         required: false
         default: ""
         type: string
+      copr_project:
+        description: "Optional Copr project in owner/project form for syncing SCM package definitions."
+        required: false
+        default: ""
+        type: string
+      submit_to_copr:
+        description: "Sync package definitions to Copr after validation."
+        required: false
+        default: false
+        type: boolean
+      submit_package_builds:
+        description: "Queue package builds after the x86_64-v3 macro package build succeeds."
+        required: false
+        default: false
+        type: boolean
   push:
     paths:
-      - 'packages.txt'
-      - 'ci/assemble-dnf-repo.py'
+      - '.copr/Makefile'
       - '.github/workflows/build-v3-rpms.yml'
+      - 'ci/copr-distgit-make-srpm.py'
+      - 'ci/sync-copr-packages.py'
+      - 'packages.txt'
+      - 'packaging/copr-rpm-macros-x86-64-v3.spec'
 
 permissions:
   contents: read
@@ -40,7 +58,7 @@ jobs:
           package_input = os.environ.get("PACKAGE_INPUT", "")
           if not package_input.strip() and not packages_file.exists():
               print("::error::packages.txt not found")
-              exit(1)
+              raise SystemExit(1)
 
           if package_input.strip():
               packages = [
@@ -55,8 +73,7 @@ jobs:
                   if line.strip() and not line.startswith("#")
               ]
 
-          # Limit matrix size to avoid GitHub Actions limits
-          max_matrix = 256
+          max_matrix = 128
           matrix = []
           if packages:
               shard_size = max(1, -(-len(packages) // max_matrix))
@@ -73,201 +90,117 @@ jobs:
                   for shard_index, shard in enumerate(shards)
               ]
 
-          with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
-              fh.write(f"matrix={json.dumps(matrix)}\n")
-              fh.write(f"package_count={len(packages)}\n")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as handle:
+              handle.write(f"matrix={json.dumps(matrix)}\n")
+              handle.write(f"package_count={len(packages)}\n")
           PY
 
-  build:
+  validate-srpms:
     needs: prepare
     if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
+      image: fedora:43
     strategy:
       fail-fast: false
       matrix:
         include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v4
-      - name: Restore DNF cache
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/dnf
-          key: fedora43-dnf-${{ hashFiles('.github/workflows/build-v3-rpms.yml', 'ci/fedora-rpm-builder.Containerfile') }}
-          restore-keys: |
-            fedora43-dnf-
-      - name: Install build tools
+
+      - name: Install SRPM validation tools
         run: |
-          if command -v fedpkg >/dev/null 2>&1 \
-            && command -v rpmbuild >/dev/null 2>&1 \
-            && command -v rpmdev-setuptree >/dev/null 2>&1 \
-            && command -v git >/dev/null 2>&1 \
-            && command -v python3 >/dev/null 2>&1 \
-            && rpm -q dnf-plugins-core >/dev/null 2>&1
-          then
-            echo "Build tools already present; skipping install."
-            exit 0
-          fi
+          dnf -y install git make python3 rpm-build ca-certificates curl
 
-          mkdir -p /etc/dnf/dnf.conf.d
-          printf '%s\n' 'keepcache=True' 'max_parallel_downloads=10' > /etc/dnf/dnf.conf.d/99-ci-cache.conf
-          dnf -y install 'dnf-command(builddep)' fedpkg rpm-build rpmdevtools git python3
-
-      - name: Build shard packages
+      - name: Generate shard SRPMs
         env:
-          SHARD_INDEX: ${{ matrix.shard }}
           PACKAGES_JSON: ${{ toJSON(matrix.packages) }}
-          FEDORA_BRANCH: f43
-          TARGET_MARCH: x86-64-v3
+          SHARD_LABEL: ${{ matrix.shard_label }}
         run: |
           python3 <<'PY'
           import json
           import os
-          import shutil
           import subprocess
-          import time
           from pathlib import Path
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
-          shard_index = int(os.environ["SHARD_INDEX"])
-          packages = json.loads(os.environ["PACKAGES_JSON"])
-          fedora_branch = os.environ["FEDORA_BRANCH"]
-          target_march = os.environ["TARGET_MARCH"]
-          
-          # Standard Fedora optflags with march override
-          # We'll use a simplified version of the override from the other workflow
-          optflags_override = (
-              f"-O2 -flto=auto -ffat-lto-objects -fexceptions -g "
-              "-grecord-gcc-switches -pipe -Wall -Werror=format-security "
-              "-Wp,-U_FORTIFY_SOURCE,-D_FORTIFY_SOURCE=3 "
-              "-Wp,-D_GLIBCXX_ASSERTIONS -specs=/usr/lib/rpm/redhat/redhat-hardened-cc1 "
-              "-fstack-protector-strong -specs=/usr/lib/rpm/redhat/redhat-annobin-cc1 "
-              f"-m64 -march={target_march} -mtune=generic -fasynchronous-unwind-tables "
-              "-fstack-clash-protection -fcf-protection -mtls-dialect=gnu2 "
-              "-fno-omit-frame-pointer -mno-omit-leaf-frame-pointer"
+          outdir = workspace / "artifacts" / f"srpm-shard-{os.environ['SHARD_LABEL']}"
+          outdir.mkdir(parents=True, exist_ok=True)
+
+          subprocess.run(
+              [
+                  "make",
+                  "-f",
+                  ".copr/Makefile",
+                  "srpm",
+                  f"outdir={outdir}",
+                  "spec=packaging/copr-rpm-macros-x86-64-v3.spec",
+              ],
+              check=True,
+              cwd=workspace,
           )
-          
-          shard_root = workspace / "artifacts" / f"shard-{shard_index:03d}"
-          shard_root.mkdir(parents=True, exist_ok=True)
-          rpmbuild_root = workspace / ".rpmbuild"
-          rpmbuild_root.mkdir(parents=True, exist_ok=True)
 
-          def run_with_retry(command, *, cwd=None, cleanup_path=None, attempts=3):
-              for attempt in range(1, attempts + 1):
-                  if cleanup_path is not None and cleanup_path.exists():
-                      shutil.rmtree(cleanup_path)
-                  try:
-                      subprocess.run(command, cwd=cwd, check=True)
-                      return
-                  except subprocess.CalledProcessError:
-                      if attempt == attempts:
-                          raise
-                      time.sleep(5 * attempt)
-
-          for package_name in packages:
-              package_dir = workspace / package_name
-              run_with_retry(
-                  [
-                      "git", "clone", "--depth", "1", "--branch", fedora_branch,
-                      f"https://src.fedoraproject.org/rpms/{package_name}.git",
-                      str(package_dir),
-                  ],
-                  cleanup_path=package_dir,
-              )
-              
-              run_with_retry(["fedpkg", "sources"], cwd=package_dir)
-              
-              spec_file = next(package_dir.glob("*.spec"), None)
-              if not spec_file:
-                  print(f"No spec file for {package_name}")
-                  continue
-                  
-              subprocess.run(["dnf", "-y", "builddep", str(spec_file)], check=True)
-              
-              topdir = rpmbuild_root / package_name
-              for subdir in ("BUILD", "BUILDROOT", "RPMS", "SOURCES", "SPECS", "SRPMS"):
-                  (topdir / subdir).mkdir(parents=True, exist_ok=True)
-                  
+          for package_name in json.loads(os.environ["PACKAGES_JSON"]):
               subprocess.run(
                   [
-                      "rpmbuild", "-ba", str(spec_file),
-                      "--define", f"optflags {optflags_override}",
-                      "--define", f"_topdir {topdir}",
-                      "--define", f"_builddir {topdir / 'BUILD'}",
-                      "--define", f"_buildrootdir {topdir / 'BUILDROOT'}",
-                      "--define", f"_rpmdir {topdir / 'RPMS'}",
-                      "--define", f"_srcrpmdir {topdir / 'SRPMS'}",
-                      "--define", f"_sourcedir {package_dir}",
-                      "--define", f"_specdir {package_dir}",
+                      "make",
+                      "-f",
+                      ".copr/Makefile",
+                      "srpm",
+                      f"outdir={outdir}",
+                      f"spec={package_name}",
                   ],
                   check=True,
+                  cwd=workspace,
               )
-
-              for rpm_path in (topdir / "RPMS").rglob("*.rpm"):
-                  shutil.copy2(rpm_path, shard_root / rpm_path.name)
-              for src_path in (topdir / "SRPMS").rglob("*.src.rpm"):
-                  shutil.copy2(src_path, shard_root / src_path.name)
-              print(f"Built {package_name}")
           PY
 
-      - name: Upload RPM artifacts
+      - name: Upload SRPM artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: rpm-shard-${{ matrix.shard_label }}
-          path: artifacts/shard-${{ matrix.shard_label }}/
+          name: srpm-shard-${{ matrix.shard_label }}
+          path: artifacts/srpm-shard-${{ matrix.shard_label }}/
           if-no-files-found: error
 
-  assemble-repo:
-    needs: build
+  sync-copr:
+    needs:
+      - prepare
+      - validate-srpms
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.submit_to_copr && inputs.copr_project != '' }}
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
+      image: fedora:43
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download RPM shard artifacts
-        uses: actions/download-artifact@v4
-        with:
-          pattern: rpm-shard-*
-          path: downloaded-rpms
-
-      - name: Install repo assembly tools
+      - name: Install Copr sync tools
         run: |
-          if command -v createrepo_c >/dev/null 2>&1
-          then
-            echo "createrepo_c already present; skipping install."
-            exit 0
-          fi
+          dnf -y install copr-cli git make python3 rpm-build ca-certificates curl
 
-          mkdir -p /etc/dnf/dnf.conf.d
-          printf '%s\n' 'keepcache=True' 'max_parallel_downloads=10' > /etc/dnf/dnf.conf.d/99-ci-cache.conf
-          dnf -y install createrepo_c
-
-      - name: Assemble DNF repository
-        run: |
-          python3 ci/assemble-dnf-repo.py \
-            --input-dir downloaded-rpms \
-            --output-dir repo/fedora43-x86-64-v3 \
-            --repo-id fedora43-kde-x86-64-v3 \
-            --repo-name 'Fedora 43 KDE x86_64-v3'
-
-      - name: Upload RPMs to Nexus YUM repository
+      - name: Configure copr-cli
         env:
-          NEXUS_BASE_URL: https://nexus.funkemunky.cc
-          NEXUS_REPOSITORY: dnf-repo-x86-64-v3
-          NEXUS_USER: ${{ secrets.nexusUser }}
-          NEXUS_PASSWORD: ${{ secrets.nexusPassword }}
+          COPR_CONFIG: ${{ secrets.COPR_CONFIG }}
         run: |
-          test -n "${NEXUS_USER}"
-          test -n "${NEXUS_PASSWORD}"
-          PACKAGE_ROOT="repo/fedora43-x86-64-v3/packages"
-          find "${PACKAGE_ROOT}" -type f -name '*.rpm' | while read -r FILEPATH; do
-            FILENAME="$(basename "${FILEPATH}")"
-            curl --fail --show-error --silent \
-              --user "${NEXUS_USER}:${NEXUS_PASSWORD}" \
-              -X POST "${NEXUS_BASE_URL}/service/rest/v1/components?repository=${NEXUS_REPOSITORY}" \
-              -H "Content-Type: multipart/form-data" \
-              -F "yum.asset=@${FILEPATH};type=application/x-rpm" \
-              -F "yum.asset.filename=${FILENAME}"
-          done
+          test -n "${COPR_CONFIG}"
+          mkdir -p ~/.config
+          printf '%s\n' "${COPR_CONFIG}" > ~/.config/copr
+          chmod 0600 ~/.config/copr
+
+      - name: Sync Copr SCM package definitions
+        env:
+          COPR_PROJECT: ${{ inputs.copr_project }}
+          PACKAGE_INPUT: ${{ inputs.package_input }}
+          SUBMIT_PACKAGE_BUILDS: ${{ inputs.submit_package_builds }}
+        run: |
+          set -euo pipefail
+          ARGS=(
+            --project "${COPR_PROJECT}"
+            --clone-url "https://github.com/${GITHUB_REPOSITORY}.git"
+            --commit "${GITHUB_SHA}"
+            --package-input "${PACKAGE_INPUT}"
+            --submit-macro-build
+          )
+          if [ "${SUBMIT_PACKAGE_BUILDS}" = "true" ]; then
+            ARGS+=(--submit-package-builds --nowait-package-builds)
+          fi
+          python3 ci/sync-copr-packages.py "${ARGS[@]}"

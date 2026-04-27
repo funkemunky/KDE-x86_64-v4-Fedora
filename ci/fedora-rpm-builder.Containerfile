@@ -6,13 +6,11 @@ RUN mkdir -p /etc/dnf/dnf.conf.d \
 
 RUN dnf -y upgrade --refresh \
     && dnf -y install \
-        'dnf-command(builddep)' \
-        fedpkg \
         git \
-        nodejs \
+        make \
         python3 \
         rpm-build \
-        rpmdevtools \
-        @kde-desktop \
-        @development-tools \
+        copr-cli \
+        ca-certificates \
+        curl \
     && dnf clean all
