@@ -82,7 +82,7 @@ jobs:
     if: ${{ needs.prepare.outputs.package_count != '0' }}
     runs-on: ubuntu-latest
     container:
-      image: fedora:43
+      image: ghcr.io/funkemunky/kde-x86_64-v4-fedora-rpm-builder:latest
     strategy:
       fail-fast: false
       matrix:

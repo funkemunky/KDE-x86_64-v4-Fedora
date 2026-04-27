@@ -8,6 +8,7 @@ RUN dnf -y upgrade --refresh \
     && dnf -y install \
         git \
         make \
+        nodejs \
         python3 \
         rpm-build \
         copr-cli \
