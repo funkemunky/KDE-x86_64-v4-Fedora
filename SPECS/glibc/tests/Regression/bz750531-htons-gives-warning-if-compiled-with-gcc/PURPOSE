@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz750531-htons-gives-warning-if-compiled-with-gcc
+Description: Test for bz750531 (htons() gives warning if compiled with gcc)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: htons() gives warning if compiled with gcc -Wconversion
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=750531

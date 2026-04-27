@@ -1,0 +1,23 @@
+summary: Test for bz657572 (Finnish locale includes unnecessary, confusing)
+description: |
+    Bug summary: Finnish locale includes unnecessary, confusing trailing spaces in the abbreviated months
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=657572
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-langpack-fi
+tag:
+  - rhel-6.3
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=657572
+extra-summary: /tools/glibc/Regression/bz657572-Finnish-locale-includes-unnecessary-confusing
+extra-task: /tools/glibc/Regression/bz657572-Finnish-locale-includes-unnecessary-confusing

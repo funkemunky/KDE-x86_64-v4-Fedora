@@ -1,0 +1,13 @@
+summary: CI Gating Plan
+discover:
+    how: fmf
+prepare:
+    - name: prepare
+      how: shell
+      script: ./plans/prepare.sh
+    - name: install
+      how: install
+      exclude:
+          - glibc-headers-s390
+execute:
+    how: tmt

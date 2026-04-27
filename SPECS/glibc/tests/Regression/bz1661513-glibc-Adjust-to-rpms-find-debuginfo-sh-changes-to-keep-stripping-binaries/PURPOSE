@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz1661513-glibc-Adjust-to-rpms-find-debuginfo-sh-changes-to-keep-stripping-binaries
+Description: Test for BZ#1661513 (glibc: Adjust to rpm's find-debuginfo.sh changes, to keep stripping binaries)
+Author: Martin Coufal <mcoufal@redhat.com>
+Bug summary: glibc: Adjust to rpm's find-debuginfo.sh changes, to keep stripping binaries
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1661513

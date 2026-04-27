@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz1022022-getaddrinfo-behavior-changed-between-RHEL-6-4-and-RHEL-6-5
+Description: Calls getaddrinfo and verifies behavior as per BZ
+Author: Arjun Shankar <ashankar@redhat.com>

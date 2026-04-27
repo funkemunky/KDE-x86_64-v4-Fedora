@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz737778-setlocale-fails-if-LC-CTYPE-is-set-to-Turkish
+Description: Test for bz737778 (setlocale() fails if LC_CTYPE is set to Turkish)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: setlocale() fails if LC_CTYPE is set to Turkish locale
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=737778

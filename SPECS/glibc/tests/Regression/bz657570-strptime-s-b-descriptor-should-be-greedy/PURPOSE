@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz657570-strptime-s-b-descriptor-should-be-greedy
+Description: Test for bz657570 (strptime()'s '%b' descriptor should be greedy)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: strptime()'s '%b' descriptor should be greedy
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=657570

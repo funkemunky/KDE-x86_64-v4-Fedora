@@ -1,0 +1,18 @@
+summary: Test for BZ#1476120 (glibc headers don't include linux/falloc.h, and)
+description: |
+    Bug summary: glibc headers don't include linux/falloc.h, and therefore doesn't include fallocate() flags
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1476120
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1476120
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-devel
+  - gcc
+duration: 20m
+extra-summary: /tools/glibc/Sanity/bz1476120-glibc-headers-don-t-include-linux-falloc-h-and
+extra-task: /tools/glibc/Sanity/bz1476120-glibc-headers-don-t-include-linux-falloc-h-and

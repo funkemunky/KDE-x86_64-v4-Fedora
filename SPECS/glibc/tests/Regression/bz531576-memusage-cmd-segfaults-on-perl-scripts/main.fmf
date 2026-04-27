@@ -1,0 +1,123 @@
+summary: Test for bz531576 ([RHEL5] memusage cmd segfaults if run on a perl)
+description: |
+    Bug summary: [RHEL5] memusage cmd segfaults if run on a perl script that has 'use' in it
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=531576
+
+    Description:
+
+    Description of problem:
+
+    memusage utility is part of glibc-devel
+
+    memusage cmd segfaults if run on a perl script that has 'use' in it.
+
+    Examples:
+
+    [my_name@my_host ~]$ ./memusage --png=out.png -x 800 -y 300 ./perltest.pl
+
+    This works (contents of perltest.pl):
+
+        #!/usr/bin/perl -w
+        print "my_name\n";
+
+    This segfaults:
+
+        #!/usr/bin/perl -w
+        use Net::SSH::Perl;
+        print "my_name\n";
+
+    Version-Release number of selected component (if applicable):
+
+
+    How reproducible:
+
+    very
+
+    Steps to Reproduce:
+    1.create perl script:
+
+        #!/usr/bin/perl -w
+        # perltest.pl
+        use Net::SSH::Perl;
+        print "my_name\n";
+
+    2. run memusage on script:
+        [my_name@my_host ~]$ ./memusage --png=out.png -x 800 -y 300 ./perltest.pl
+      
+    Actual results:
+
+
+    my_name@my_host /tmp % memusage --png=out.png -x 800 -y 300 ./perltest.pl
+    /usr/bin/memusage: line 253: 29483 Segmentation fault      (core dumped) LD_PRELOAD=/usr/\$LIB/libmemusage.so MEMUSAGE_OUTPUT=/tmp/memusage.S29480 "$@"
+    /usr/bin/memusage: line 265: 29484 Floating point exception(core dumped) $memusagestat $memusagestat_args "$datafile" "$png"
+
+
+    Expected results:
+
+    my_name@my_host /tmp % memusage --png=out.png -x 800 -y 300 ./perltest.pl
+    my_name
+
+    Memory usage summary: heap total: 278236, heap peak: 271027, stack peak: 10816
+             total calls   total memory   failed calls
+     malloc|        684         277100              0
+    realloc|         14           1136              0  (nomove:6, dec:1, free:0)
+     calloc|          0              0              0
+       free|         94          20735
+    Histogram for block sizes:
+        0-15            215  30% ==================================================
+       16-31            110  15% =========================
+       32-47             36   5% ========
+       48-63            110  15% =========================
+       64-79             34   4% =======
+       80-95             64   9% ==============
+       96-111            63   9% ==============
+      112-127             3  <1%
+      128-143             8   1% =
+      144-159             2  <1%
+      160-175             4  <1%
+      240-255             4  <1%
+      256-271             8   1% =
+      512-527             2  <1%
+      592-607             1  <1%
+      800-815             3  <1%
+     1024-1039            3  <1%
+     1568-1583            1  <1%
+     2400-2415            1  <1%
+     4032-4047            2  <1%
+     4048-4063            1  <1%
+     4064-4079            1  <1%
+     4080-4095            7   1% =
+     4096-4111           10   1% ==
+     4224-4239            1  <1%
+     4368-4383            2  <1%
+     7904-7919            1  <1%
+       large              1  <1%
+
+
+
+    Additional info:
+
+    I have no ulimit and yet there does not appear to be a core file.
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-utils
+  - python
+  - python3
+  - gcc
+tag:
+  - tier2_mfranc
+  - ttt
+  - noEWA
+  - Tier2
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 90m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=531576
+extra-summary: /tools/glibc/Regression/bz531576-memusage-cmd-segfaults-on-perl-scripts
+extra-task: /tools/glibc/Regression/bz531576-memusage-cmd-segfaults-on-perl-scripts

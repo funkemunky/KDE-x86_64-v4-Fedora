@@ -1,0 +1,15 @@
+summary: What the test does
+description: |
+    Test for locale-archive(glibc-all-langpacks). It came from https://bugzilla.redhat.com/show_bug.cgi?id=2057697
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-all-langpacks
+  - python3
+duration: 20m
+extra-summary: /tools/glibc/Regression/locale-archive-test
+extra-task: /tools/glibc/Regression/locale-archive-test

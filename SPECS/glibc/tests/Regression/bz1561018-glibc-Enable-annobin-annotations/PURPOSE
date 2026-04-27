@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz1561018-glibc-Enable-annobin-annotations
+Description: Test for BZ#1561018 (glibc Enable annobin annotations)
+Author: Alexandra Hájková <ahajkova@redhat.com>
+Bug summary: glibc: Enable annobin annotations
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1561018

@@ -1,0 +1,164 @@
+summary: Test for bz676039 (Resolver fails to return all addresses of)
+description: |
+    Bug summary: Resolver fails to return all addresses of multi-homed hosts in /etc/hosts
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=676039
+
+    Description:
+
+    getaddrinfo does not return all ip addresses on first call when name resolution is done from /etc/hosts.
+
+    This has been fixed by the following commits upstream:
+
+    1f0398248c1c581a1203c0d294acde295b949fea
+    1ce7d80ddc62d4bb3e8e4f89fbcb6fa21361733d
+
+    1ce7d80ddc62d4bb3e8e4f89fbcb6fa21361733d is needed because nscd links in getaddrinfo. The side-effect is that a similar bug in nscd will also be fixed (upstream bug #4814).
+
+    Private branch: private-spoyarek-ROS00401237
+    Build: http://brewweb.devel.redhat.com/brew/taskinfo?taskID=3051905
+
+
+    Customer has verified that the patch works
+
+    This issue was first reported to Oracle as a problem with Java. The public link to the report can be found here:
+    http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7007462
+
+    Consider the following setup on RedHat Enterprise Linux 5.5 x64.
+    1) Add the following lines to /etc/hosts:
+    multihost 1.1.1.1
+    multihost 2.2.2.2
+    multihost 3.3.3.3
+
+    2) Add the following line to /etc/host.conf:
+    multi on
+
+    3) Compile and execute the following program (provided by Oracle Java engineering team):
+
+    /* This test code is to be used for demonstrating the
+    * issue associated with SR 2-8229521.
+    */
+    #include <stdio.h>
+
+    #include <errno.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+    #include <string.h>
+    #include <strings.h>
+    #include <stdlib.h>
+    #include <ctype.h>
+
+    void dump_res(struct addrinfo * p_res){
+    struct addrinfo *iter = p_res;
+    while(iter != 0){
+    struct sockaddr_in *addr1b;
+    addr1b = (struct sockaddr_in *)iter->ai_addr;
+    printf("getaddrinfo returns: %s %d %d\n", inet_ntoa(addr1b->sin_addr) , iter->ai_family, iter->ai_protocol );
+    iter=iter->ai_next;
+    }
+    }
+
+    int main(int argc, char *argv[]){
+    if (argc != 2){
+    printf("Usage prog hostname\n");
+    exit(7);
+    }
+
+    struct addrinfo hints, *res;
+    int error;
+
+    bzero(&hints, sizeof(hints));
+    hints.ai_flags = AI_CANONNAME;
+    hints.ai_family = AF_UNSPEC;
+
+    printf("======== RH BUG ===============\n");
+
+    if ( (error = getaddrinfo(argv[1], NULL, &hints, &res) ) ){
+    perror("getaddrinfo");
+    exit(-1);
+    }
+
+    dump_res(res);
+    freeaddrinfo(res);
+
+    printf("======== WORKAROUND ===============\n");
+
+    hints.ai_family = AF_INET;
+
+    if ( (error = getaddrinfo(argv[1], NULL, &hints, &res) ) ){
+    perror("getaddrinfo");
+    exit(-1);
+    }
+
+    dump_res(res);
+    freeaddrinfo(res);
+    }
+
+    4) You can see the following output from the above program:
+    # ./a.out multihost
+    ======== RH BUG ===============
+    getaddrinfo returns: 1.1.1.1 2 6
+    getaddrinfo returns: 1.1.1.1 2 17
+    getaddrinfo returns: 1.1.1.1 2 0
+    ======== WORKAROUND ===============
+    getaddrinfo returns: 1.1.1.1 2 6
+    getaddrinfo returns: 1.1.1.1 2 17
+    getaddrinfo returns: 1.1.1.1 2 0
+    getaddrinfo returns: 2.2.2.2 2 6
+    getaddrinfo returns: 2.2.2.2 2 17
+    getaddrinfo returns: 2.2.2.2 2 0
+    getaddrinfo returns: 3.3.3.3 2 6
+    getaddrinfo returns: 3.3.3.3 2 17
+    getaddrinfo returns: 3.3.3.3 2 0
+
+
+    Note that a similarly configured Ubuntu 10.10 Server (x64), provides the following - correct - output:
+    $ ./a.out multihost
+    ======== RH BUG ===============
+    getaddrinfo returns: 1.1.1.1 2 6
+    getaddrinfo returns: 1.1.1.1 2 17
+    getaddrinfo returns: 1.1.1.1 2 0
+    getaddrinfo returns: 2.2.2.2 2 6
+    getaddrinfo returns: 2.2.2.2 2 17
+    getaddrinfo returns: 2.2.2.2 2 0
+    getaddrinfo returns: 3.3.3.3 2 6
+    getaddrinfo returns: 3.3.3.3 2 17
+    getaddrinfo returns: 3.3.3.3 2 0
+    ======== WORKAROUND ===============
+    getaddrinfo returns: 1.1.1.1 2 6
+    getaddrinfo returns: 1.1.1.1 2 17
+    getaddrinfo returns: 1.1.1.1 2 0
+    getaddrinfo returns: 2.2.2.2 2 6
+    getaddrinfo returns: 2.2.2.2 2 17
+    getaddrinfo returns: 2.2.2.2 2 0
+    getaddrinfo returns: 3.3.3.3 2 6
+    getaddrinfo returns: 3.3.3.3 2 17
+    getaddrinfo returns: 3.3.3.3 2 0
+
+    In other words, hints.ai_family / hints.ai_flags for getaddrinfo are not working properly.
+
+    According to the manual of getaddrinfo (excerpts): "AF_UNSPEC in ai_family specifies any protocol family (either IPv4 or IPv6, for example)."
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-common
+  - gcc
+tag:
+  - RHEL57REVIEW
+  - RHBA-2011:11091
+  - rhel-5.7
+  - ttt
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=676039
+extra-summary: /tools/glibc/Regression/bz676039-Resolver-fails-to-return-all-addresses-of
+extra-task: /tools/glibc/Regression/bz676039-Resolver-fails-to-return-all-addresses-of

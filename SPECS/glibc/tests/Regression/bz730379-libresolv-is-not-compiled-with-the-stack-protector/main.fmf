@@ -1,0 +1,26 @@
+summary: Test for bz730379 (libresolv is not compiled with the stack protector)
+description: |
+    Bug summary: libresolv is not compiled with the stack protector enabled
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=730379
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - binutils
+tag:
+  - rhel-6.2
+  - simple
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 3m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=730379
+extra-summary: /tools/glibc/Regression/bz730379-libresolv-is-not-compiled-with-the-stack-protector
+extra-task: /tools/glibc/Regression/bz730379-libresolv-is-not-compiled-with-the-stack-protector

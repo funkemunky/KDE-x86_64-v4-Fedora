@@ -1,0 +1,24 @@
+summary: Test for bz639000 (Wrong Ukrainian currency symbol)
+description: |
+    Bug summary: Wrong Ukrainian currency symbol
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=639000
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+  - glibc-langpack-uk
+tag:
+  - rhel-6.3
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=639000
+extra-summary: /tools/glibc/Standardscompliance/bz639000-Wrong-Ukrainian-currency-symbol
+extra-task: /tools/glibc/Standardscompliance/bz639000-Wrong-Ukrainian-currency-symbol

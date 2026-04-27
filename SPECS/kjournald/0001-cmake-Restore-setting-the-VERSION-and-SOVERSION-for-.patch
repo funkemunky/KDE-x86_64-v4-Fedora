@@ -1,0 +1,33 @@
+From 00178f2a935feae877b163efb016ed9927f280f4 Mon Sep 17 00:00:00 2001
+From: Neal Gompa <ngompa@kde.org>
+Date: Tue, 15 Jul 2025 12:15:22 -0400
+Subject: [PATCH] cmake: Restore setting the VERSION and SOVERSION for
+ libkjournald
+
+This is a library installed into the public library path, and technically
+it still has the ability to be linked to when the experimental devel files
+are shipped, so put this back for now.
+---
+ org/kde/kjournald/CMakeLists.txt | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/org/kde/kjournald/CMakeLists.txt b/org/kde/kjournald/CMakeLists.txt
+index e6f3cf0..66eee98 100644
+--- a/org/kde/kjournald/CMakeLists.txt
++++ b/org/kde/kjournald/CMakeLists.txt
+@@ -94,6 +94,12 @@ ecm_finalize_qml_module(kjournald DESTINATION ${KDE_INSTALL_QMLDIR})
+ #    QT_QMLCACHEGEN_ARGUMENTS "--verbose"
+ #)
+ 
++set_target_properties(kjournald PROPERTIES
++    VERSION ${KJOURNALD_VERSION}
++    SOVERSION ${KJOURNALD_SOVERSION}
++    EXPORT_NAME KJournald
++)
++
+ install(TARGETS kjournald
+     EXPORT KJournaldTargets
+     DESTINATION ${KDE_INSTALL_LIBDIR})
+-- 
+2.49.0
+

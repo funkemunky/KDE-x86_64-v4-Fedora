@@ -1,0 +1,22 @@
+summary: Calls and verifies result of 'backtrace' while performing recursion.
+description: ''
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - glibc-headers
+tag:
+  - er15271
+  - simple
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=868808
+extra-summary: /tools/glibc/Regression/bz868808-backtrace-for-recursive-functions
+extra-task: /tools/glibc/Regression/bz868808-backtrace-for-recursive-functions

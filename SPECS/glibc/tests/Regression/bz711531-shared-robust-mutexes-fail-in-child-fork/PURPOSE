@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz711531-shared-robust-mutexes-fail-in-child-fork
+Description: Test for bz711531 (shared, robust mutexes fail in child fork)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: shared, robust mutexes fail in child fork
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=711531

@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz827362-RHEL6-2-ftell-after-fseek-moves-the-offset-on-a
+Description: Test for BZ#827362 ([RHEL6.2] ftell after fseek moves the offset on a)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: [RHEL6.2] ftell after fseek moves the offset on a stream using wide characters
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=827362

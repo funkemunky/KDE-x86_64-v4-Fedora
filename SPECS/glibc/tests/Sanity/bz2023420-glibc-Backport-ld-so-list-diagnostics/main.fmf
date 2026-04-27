@@ -1,0 +1,19 @@
+summary: 'Test for BZ#2023420 (glibc: Backport ld.so --list-diagnostics)'
+description: |
+    Bug summary: glibc: Backport ld.so --list-diagnostics [rhel-8.6]
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2023420
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2023420
+contact: Martin Coufal <mcoufal@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-8.6
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+duration: 10m
+extra-summary: /tools/glibc/Sanity/bz2023420-glibc-Backport-ld-so-list-diagnostics
+extra-task: /tools/glibc/Sanity/bz2023420-glibc-Backport-ld-so-list-diagnostics

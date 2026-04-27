@@ -1,0 +1,26 @@
+summary: Test for bz737778 (setlocale() fails if LC_CTYPE is set to Turkish)
+description: |
+    Bug summary: setlocale() fails if LC_CTYPE is set to Turkish locale
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=737778
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+  - diffutils
+  - glibc-langpack-tr
+  - glibc-gconv-extra
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=737778
+extra-summary: /tools/glibc/Regression/bz737778-setlocale-fails-if-LC-CTYPE-is-set-to-Turkish
+extra-task: /tools/glibc/Regression/bz737778-setlocale-fails-if-LC-CTYPE-is-set-to-Turkish

@@ -1,0 +1,7 @@
+PURPOSE of /tools/glibc/Regression/bz842280-posix-spawn-invokes-sh-when-it-should-not
+Description: Test for BZ#842280 (posix_spawn() invokes sh when it should not)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: posix_spawn() invokes sh when it should not
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=842280
+
+Uses reproducer from Michal Hlavinka.

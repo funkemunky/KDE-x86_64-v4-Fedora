@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz868808-backtrace-for-recursive-functions
+Description: Calls and verifies result of 'backtrace' while performing recursion.
+Author: Arjun Shankar <ashankar@redhat.com>

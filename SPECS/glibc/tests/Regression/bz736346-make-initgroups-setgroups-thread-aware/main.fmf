@@ -1,0 +1,23 @@
+summary: Test for bz736346 (make initgroups (setgroups) thread aware)
+description: |
+    Bug summary: make initgroups (setgroups) thread aware
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=736346
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=736346
+extra-summary: /tools/glibc/Regression/bz736346-make-initgroups-setgroups-thread-aware
+extra-task: /tools/glibc/Regression/bz736346-make-initgroups-setgroups-thread-aware

@@ -1,0 +1,7 @@
+#!/usr/bin/expect
+
+set timeout -1
+spawn ./testcase
+expect "stdout" { expect "stderr" { exit 0 } }
+exit 1
+

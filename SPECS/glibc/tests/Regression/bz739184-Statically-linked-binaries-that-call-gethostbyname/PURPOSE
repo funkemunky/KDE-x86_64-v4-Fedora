@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz739184-Statically-linked-binaries-that-call-gethostbyname
+Description: Test for bz739184 (Statically-linked binaries that call gethostbyname)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Statically-linked binaries that call gethostbyname crash when executed.
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=739184

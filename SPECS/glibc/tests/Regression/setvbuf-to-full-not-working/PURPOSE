@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/setvbuf-to-full-not-working
+Description: When a file was first open as NON BUFFERED, and then we change it into FULL BUFFERED, this will take no effect (PR6719)
+Author: Petr Muller <pmuller@redhat.com>

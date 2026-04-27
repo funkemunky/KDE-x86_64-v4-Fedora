@@ -1,0 +1,27 @@
+summary: Test for BZ#839572 (Anaconda traceback when installing on s390x)
+description: |
+    Bug summary: Anaconda traceback when installing on s390x: ValueError: (3, 'No such process')
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=839572
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+recommend:
+  - glibc
+  - python
+  - python2
+  - python3
+  - python36
+tag:
+  - simple
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 45m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=839572
+extra-summary: /tools/glibc/Regression/bz839572-Anaconda-traceback-when-installing-on-s390x
+extra-task: /tools/glibc/Regression/bz839572-Anaconda-traceback-when-installing-on-s390x

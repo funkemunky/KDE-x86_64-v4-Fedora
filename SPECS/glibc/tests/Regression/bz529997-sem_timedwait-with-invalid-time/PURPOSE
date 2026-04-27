@@ -1,0 +1,148 @@
+PURPOSE of /tools/glibc/Regression/bz529997-sem_timedwait-with-invalid-time
+Description: Test for bz529997 (assembler implementation of sem_timedwait() on)
+Author: Petr Muller <pmuller@redhat.com>
+Bug summary: assembler implementation of sem_timedwait() on x86/x86_64 reveals a bug when invalid nanosecond argument is used
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=529997
+
+Description:
+
+Created an attachment (id=365459)
+the reproducer's source code
+
+Description of problem:
+
+An assembler implementation of seg_timedwait() for x86/x86_64 wrongly decrements the number of waiting threads stored in block of memory pointed by (sem_t *) when invalid nanosecond value is passed through the second argument. This is caused by jumping over the code, which increments (new_sem *)->nwaiters (because of wrong nanosecond argument) to the end of the seg_timedwait() function, where (new_sem *)->nwaiters is finally decremented. This breaks the subsequent semaphore operations. Please, see the `Additional info' for more details.
+
+
+Version-Release number of selected component (if applicable):
+
+RHEL5(2,3,4), Fedora 11, the newest upstream sources from ftp.gnu.org (2.10.1)
+
+
+How reproducible:
+
+always
+
+
+Steps to Reproduce:
+
+1. compile attached reproducer:
+
+  $ gcc -o reproducer reproducer.c -lpthread
+
+2. run it:
+
+  $ ./reproducer
+
+
+Actual results:
+
+$ ./reproducer
+before sem_timedwait(): new_sem->nwaiters = 0x0
+ERR: sem_timedwait() failed (errno=22: Invalid argument)
+after sem_timedwait(): new_sem->nwaiters = 0xffffffff
+$
+
+
+Expected results:
+
+$ ./reproducer
+before sem_timedwait(): new_sem->nwaiters = 0x0
+ERR: sem_timedwait() failed (errno=22: Invalid argument)
+after sem_timedwait(): new_sem->nwaiters = 0x0
+$
+
+
+Additional info:
+
+The bug was introduced by implementation of private futexes into glibc by a patch:
+glibc/RHEL-5/glibc-private-futex.patch
+
+this patch relates to the following BZ:
+https://bugzilla.redhat.com/show_bug.cgi?id=433353
+
+and was introduced in:
+glibc-2.5-29/RHEL2 (it enables the above patch in spec.file)
+
+
+I have attached proposed patch, which fixes the bug and also more real-world reproducer (gcc -o real-reproducer real-reproducer.c -lrt).
+
+Some details from investigation of the real world reproducer:
+
+The output:
+
+$ ./real-reproducer
+main: top of loop: sval = 0
+main: calling sem_timedwait
+thread: calling sem_timedwait with bogus tv_nsec
+thread: sem_timedwait: errno = 22 strerror = Invalid argument
+thread: calling sem_post
+main: sem_timedwait: errno = 110 strerror = Connection timed out  <<< --- it waits here until timeouts, even if the thread calls sem_post()
+main: top of loop: sval = 1
+main: calling sem_timedwait
+main: sem_timedwait: success      <<< --- passes
+main: calling sem_post
+$
+
+If the value of nanosecond field is greater than 1000000000d, it directly jumps to the end of the function and executes the code which decrements the number of waiters, but remember the number of waiters wasn't incremented at the beginning.
+
+See the rosponsible code with comments:
+
+glibc-2.5-20061008T1257/nptl/sysdeps/unix/sysv/linux/x86_64/sem_timedwait.S:
+=== snip ===
+...
+/* Check for invalid nanosecond field.  */
+cmpq    $1000000000, 8(%r13)
+movl    $EINVAL, %r14d
+jae     6f                 <<< the value is invalid it jumps to 6:
+
+LOCK
+addq    $1, NWAITERS(%r12) <<< see this incrementation is after jump to 6:
+
+...
+6:
+movq    errno@gottpoff(%rip), %rdx
+movl    %r14d, %fs:(%rdx)
+orl     $-1, %eax
+jmp     10b        <<< jumping to 10:
+
+...
+10:     LOCK
+subq    $1, NWAITERS(%r12) <<< we shouldn't increment here
+
+addq    $24, %rsp
+.Laddq:
+popq    %r14
+.Lpop_r14:
+popq    %r13
+.Lpop_r13:
+popq    %r12
+.Lpop_r12:
+retq               <<< end of sem_timedwait()
+=== end of snip ===
+
+If we move the incrementation of number of waiting threads before checking for the correct value of nanosecond field or change the logic of the code to not decrement the waiters, it works correctly.
+
+The reason why the sem_post() doesn't work in the func() function is that, the sem_timedwait() decreases the number of waiters as described above and the sem_post() checks this value and if it is zero, it jumps over the code, which would otherwise wake the other threads:
+
+glibc-2.5-20061008T1257/nptl/sysdeps/unix/sysv/linux/x86_64/sem_post.S:
+=== snip ===
+...
+cmpq    $0, NWAITERS(%rdi) <<< this makes the call to sem_post() in func() useless
+je      2f                 <<< jump to 2:
+
+movl    $SYS_futex, %eax
+movl    $FUTEX_WAKE, %esi
+orl     PRIVATE(%rdi), %esi
+movl    $1, %edx
+syscall
+
+testq   %rax, %rax
+js      1f
+
+2:
+xorl    %eax, %eax        <<< do exit clearly
+retq
+=== end of snip ===
+
+so the sem_timedwait() in main() timeouts and the next call to sem_timedwait() passes immediately.

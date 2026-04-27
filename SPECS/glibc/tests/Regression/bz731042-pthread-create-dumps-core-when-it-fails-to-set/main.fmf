@@ -1,0 +1,26 @@
+summary: Test for bz731042 (pthread_create dumps core when it fails to set)
+description: |
+    Bug summary: pthread_create dumps core when it  fails to set real time policy
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=731042
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - gcc
+tag:
+  - rhel-6.2
+  - simple
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=731042
+extra-summary: /tools/glibc/Regression/bz731042-pthread-create-dumps-core-when-it-fails-to-set
+extra-task: /tools/glibc/Regression/bz731042-pthread-create-dumps-core-when-it-fails-to-set

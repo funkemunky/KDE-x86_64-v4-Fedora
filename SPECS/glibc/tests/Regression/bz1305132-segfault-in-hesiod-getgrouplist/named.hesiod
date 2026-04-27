@@ -1,0 +1,17 @@
+; SOA and NS records.
+@	IN	SOA	ns.bz1305132.	hostmaster.bz1305132. (
+			20160915 ; serial
+			3600     ; refresh every hour
+			1200     ; retry every 20 minutes
+			604800   ; expire after 1 week
+			86400 )  ; minimum TTL 1 day
+
+	IN	NS	ns.bz1305132.
+
+ns.bz1305132.	A	127.0.0.1
+
+; Actual Hesiod data.
+libc.group	TXT	"libc:*:123:gnu"
+123.gid		CNAME	libc.group
+gnu.passwd	TXT	"gnu:*:4567:123:GNU:/home/gnu:/bin/bash"
+4567.uid	CNAME	gnu.passwd

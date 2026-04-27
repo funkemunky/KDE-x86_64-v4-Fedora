@@ -1,0 +1,20 @@
+summary: Checks if the /etc/rpc file is marked as a configuration file after updating
+    of glibc.
+description: ''
+contact: David Kaspar <dkaspar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+tag:
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=829222
+extra-summary: /tools/glibc/Regression/bz829222-rpc-file-in-etc-folder-not-marked-as-configuration-file
+extra-task: /tools/glibc/Regression/bz829222-rpc-file-in-etc-folder-not-marked-as-configuration-file

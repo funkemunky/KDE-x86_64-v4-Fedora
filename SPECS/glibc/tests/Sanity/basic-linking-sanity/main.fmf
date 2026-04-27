@@ -1,0 +1,23 @@
+summary: Test contains few testcases linking to various glibc libraries. Testing if
+    testcases can be successfuly linked and run
+description: ''
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - gcc
+  - glibc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 30m
+extra-summary: /tools/glibc/Sanity/basic-linking-sanity
+extra-task: /tools/glibc/Sanity/basic-linking-sanity

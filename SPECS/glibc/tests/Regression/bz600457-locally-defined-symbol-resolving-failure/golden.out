@@ -1,0 +1,8 @@
+1)main:dlopen  libA.so
+2)main:dlopen  libX.so
+3)main:dlclose libX.so
+4)libC:dlopen  libB.so
+5)libC:atexit(libC_fini)
+6)main:dlclose libA.so
+8)main:finish main
+7)libC:finish - atexit()

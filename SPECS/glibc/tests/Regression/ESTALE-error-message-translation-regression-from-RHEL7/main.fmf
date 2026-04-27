@@ -1,0 +1,25 @@
+summary: What the test does
+description: ''
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-8.9
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc-devel
+  - glibc-langpack-es
+  - glibc-langpack-ja
+  - glibc-langpack-fr
+  - glibc-langpack-de
+  - glibc-langpack-it
+  - glibc-langpack-ko
+  - glibc-langpack-pt
+  - glibc-langpack-ru
+  - glibc-langpack-zh
+duration: 10m
+extra-summary: /tools/glibc/Regression/ESTALE-error-message-translation-regression-from-RHEL7
+extra-task: /tools/glibc/Regression/ESTALE-error-message-translation-regression-from-RHEL7

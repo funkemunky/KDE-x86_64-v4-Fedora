@@ -1,0 +1,22 @@
+summary: Test for one case, where expf gives an incorrect result
+description: ''
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+  - gcc-c++
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+extra-summary: /tools/glibc/Regression/expf-gives-infinity-where-result-finite
+extra-task: /tools/glibc/Regression/expf-gives-infinity-where-result-finite

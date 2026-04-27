@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz2027789-glibc-backtrace-function-crashes-without-vdso-on
+Description: Test for BZ#2027789 (glibc backtrace function crashes without vdso on)
+Author: Sergey Kolosov <skolosov@redhat.com>
+Bug summary: glibc: backtrace function crashes without vdso on ppc64le
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2027789

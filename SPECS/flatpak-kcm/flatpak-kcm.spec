@@ -1,0 +1,286 @@
+
+# https://fedoraproject.org/wiki/Changes/EncourageI686LeafRemoval
+ExcludeArch: %{ix86}
+
+Name:          flatpak-kcm
+Version:       6.6.4
+Release:       1%{?dist}
+License:       BSD-2-Clause and BSD-3-Clause and CC0-1.0 and GPL-2.0-or-later
+Summary:       Flatpak Permissions Management KCM
+Url:           https://invent.kde.org/plasma/flatpak-kcm
+
+Source0:       https://download.kde.org/%{stable_kf6}/plasma/%{version}/%{name}-%{version}.tar.xz
+Source1:       https://download.kde.org/%{stable_kf6}/plasma/%{version}/%{name}-%{version}.tar.xz.sig
+
+BuildRequires: extra-cmake-modules
+BuildRequires: gcc-c++
+BuildRequires: kf6-rpm-macros
+BuildRequires: desktop-file-utils
+
+BuildRequires: cmake(KF6Declarative)
+BuildRequires: cmake(KF6I18n)
+BuildRequires: cmake(KF6ItemModels)
+BuildRequires: cmake(KF6KCMUtils)
+BuildRequires: cmake(KF6IconThemes)
+
+BuildRequires: cmake(Qt6Svg)
+
+BuildRequires: pkgconfig(flatpak)
+
+%description
+%{summary}.
+
+%prep
+%autosetup -p1
+
+%build
+%cmake_kf6
+%cmake_build
+
+%install
+%cmake_install
+desktop-file-validate %{buildroot}%{_datadir}/applications/kcm_app-permissions.desktop
+%find_lang kcm_app-permissions
+
+%files -f kcm_app-permissions.lang
+%license LICENSES/*
+%{_kf6_qtplugindir}/plasma/kcms/systemsettings/kcm_app-permissions.so
+%{_kf6_datadir}/applications/kcm_app-permissions.desktop
+
+%changelog
+* Fri Apr 10 2026 Steve Cossette <farchord@gmail.com> - 6.6.4-1
+- 6.6.4
+
+* Tue Mar 17 2026 Steve Cossette <farchord@gmail.com> - 6.6.3-1
+- 6.6.3
+
+* Tue Mar 03 2026 Steve Cossette <farchord@gmail.com> - 6.6.2-1
+- 6.6.2
+
+* Tue Feb 24 2026 Steve Cossette <farchord@gmail.com> - 6.6.1-1
+- 6.6.1
+
+* Thu Feb 12 2026 Steve Cossette <farchord@gmail.com> - 6.6.0-1
+- 6.6.0
+
+* Tue Jan 27 2026 Steve Cossette <farchord@gmail.com> - 6.5.91-1
+- 6.5.91
+
+* Fri Jan 16 2026 Fedora Release Engineering <releng@fedoraproject.org> - 6.5.90-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_44_Mass_Rebuild
+
+* Tue Jan 13 2026 farchord@gmail.com - 6.5.90-1
+- 6.5.90
+
+* Tue Jan 13 2026 farchord@gmail.com - 6.5.5-1
+- 6.5.5
+
+* Tue Dec 09 2025 Steve Cossette <farchord@gmail.com> - 6.5.4-1
+- 6.5.4
+
+* Tue Nov 18 2025 Steve Cossette <farchord@gmail.com> - 6.5.3-1
+- 6.5.3
+
+* Tue Nov 04 2025 Steve Cossette <farchord@gmail.com> - 6.5.2-1
+- 6.5.2
+
+* Tue Oct 28 2025 Steve Cossette <farchord@gmail.com> - 6.5.1-1
+- 6.5.1
+
+* Fri Oct 17 2025 Steve Cossette <farchord@gmail.com> - 6.5.0-1
+- 6.5.0
+
+* Thu Oct 02 2025 Steve Cossette <farchord@gmail.com> - 6.4.91-1
+- 6.4.91
+
+* Thu Sep 25 2025 Steve Cossette <farchord@gmail.com> - 6.4.90-1
+- 6.4.90
+
+* Tue Sep 16 2025 farchord@gmail.com - 6.4.5-1
+- 6.4.5
+
+* Sat Aug 16 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.4.4-2
+- Drop i686 support (leaf package)
+
+* Wed Aug 06 2025 Steve Cossette <farchord@gmail.com> - 6.4.4-1
+- 6.4.4
+
+* Wed Jul 23 2025 Fedora Release Engineering <releng@fedoraproject.org> - 6.4.3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_43_Mass_Rebuild
+
+* Tue Jul 15 2025 Steve Cossette <farchord@gmail.com> - 6.4.3-1
+- 6.4.3
+
+* Thu Jul 03 2025 Steve Cossette <farchord@gmail.com> - 6.4.2-1
+- 6.4.2
+
+* Tue Jun 24 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.4.1-1
+- 6.4.1
+
+* Mon Jun 16 2025 Steve Cossette <farchord@gmail.com> - 6.4.0-1
+- 6.4.0
+
+* Sat May 31 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.3.91-2
+- Add signature file
+
+* Fri May 30 2025 Steve Cossette <farchord@gmail.com> - 6.3.91-1
+- 6.3.91
+
+* Thu May 15 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.3.90-1
+- 6.3.90
+
+* Tue May 06 2025 Steve Cossette <farchord@gmail.com> - 6.3.5-1
+- 6.3.5
+
+* Wed Apr 02 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.3.4-1
+- 6.3.4
+
+* Tue Mar 11 2025 Steve Cossette <farchord@gmail.com> - 6.3.3-1
+- 6.3.3
+
+* Tue Feb 25 2025 Steve Cossette <farchord@gmail.com> - 6.3.2-1
+- 6.3.2
+
+* Tue Feb 18 2025 Steve Cossette <farchord@gmail.com> - 6.3.1-1
+- 6.3.1
+
+* Thu Feb 06 2025 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.3.0-1
+- 6.3.0
+
+* Thu Jan 23 2025 Steve Cossette <farchord@gmail.com> - 6.2.91-1
+- 6.2.91
+
+* Thu Jan 16 2025 Fedora Release Engineering <releng@fedoraproject.org> - 6.2.90-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_42_Mass_Rebuild
+
+* Thu Jan 09 2025 Steve Cossette <farchord@gmail.com> - 6.2.90-1
+- Beta 6.2.90
+
+* Tue Dec 31 2024 Steve Cossette <farchord@gmail.com> - 6.2.5-1
+- 6.2.5
+
+* Tue Nov 26 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.2.4-1
+- 6.2.4
+
+* Tue Nov 05 2024 Steve Cossette <farchord@gmail.com> - 6.2.3-1
+- 6.2.3
+
+* Tue Oct 22 2024 Steve Cossette <farchord@gmail.com> - 6.2.2-1
+- 6.2.2
+
+* Tue Oct 15 2024 Steve Cossette <farchord@gmail.com> - 6.2.1-1
+- 6.2.1
+
+* Thu Oct 03 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.2.0-1
+- 6.2.0
+
+* Thu Sep 12 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.90-1
+- 6.1.90
+
+* Tue Sep 10 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.5-1
+- 6.1.5
+
+* Fri Aug 09 2024 Steve Cossette <farchord@gmail.com> - 6.1.4-1
+- 6.1.4
+
+* Wed Jul 24 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.3-3
+- rebuilt
+
+* Wed Jul 17 2024 Fedora Release Engineering <releng@fedoraproject.org> - 6.1.3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_41_Mass_Rebuild
+
+* Tue Jul 16 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.3-1
+- 6.1.3
+
+* Wed Jul 03 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.2-1
+- 6.1.2
+
+* Tue Jun 25 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.1-1
+- 6.1.1
+
+* Thu Jun 13 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.1.0-1
+- 6.1.0
+
+* Fri May 24 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.90-1
+- 6.0.90
+
+* Wed May 22 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.5-1
+- 6.0.5
+
+* Tue Apr 16 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.4-1
+- 6.0.4
+
+* Tue Mar 26 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.3-1
+- 6.0.3
+
+* Tue Mar 12 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.2-1
+- 6.0.2
+
+* Wed Mar 06 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.1-1
+- 6.0.1
+
+* Wed Feb 21 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 6.0.0-1
+- 6.0.0
+
+* Wed Jan 31 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.93.0-1
+- 5.93.0
+
+* Wed Jan 24 2024 Fedora Release Engineering <releng@fedoraproject.org> - 5.92.0-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Fri Jan 19 2024 Fedora Release Engineering <releng@fedoraproject.org> - 5.92.0-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_40_Mass_Rebuild
+
+* Wed Jan 10 2024 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.92.0-1
+- 5.92.0
+
+* Thu Dec 21 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.91.0-1
+- 5.91.0
+
+* Sun Dec 03 2023 Alessandro Astone <ales.astone@gmail.com> - 5.90.0-1
+- Update to 5.90.0
+
+* Fri Nov 10 2023 Alessandro Astone <ales.astone@gmail.com> - 5.27.80-1
+- 5.27.80
+
+* Tue Oct 24 2023 Steve Cossette <farchord@gmail.com> - 5.27.9-1
+- 5.27.9
+
+* Tue Sep 12 2023 justin.zobel@gmail.com - 5.27.8-1
+- 5.27.8
+
+* Tue Aug 01 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.7-1
+- 5.27.7
+
+* Wed Jul 19 2023 Fedora Release Engineering <releng@fedoraproject.org> - 5.27.6-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_39_Mass_Rebuild
+
+* Sun Jun 25 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.6-1
+- 5.27.6
+
+* Wed May 10 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.5-1
+- 5.27.5
+
+* Tue Apr 04 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.4-1
+- 5.27.4
+
+* Tue Mar 14 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.3-1
+- 5.27.3
+
+* Wed Mar 01 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.2.2-1
+- 5.27.2.2
+
+* Tue Feb 28 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.2-1
+- 5.27.2
+
+* Tue Feb 21 2023 Marc Deop i Argemí <marcdeop@fedoraproject.org> - 5.27.1-1
+- 5.27.1
+
+* Tue Feb 14 2023 Marc Deop <marcdeop@fedoraproject.org> - 5.27.0-2
+- Rebuild against new sources
+
+* Thu Feb 09 2023 Marc Deop <marcdeop@fedoraproject.org> - 5.27.0-1
+- 5.27.0
+
+* Sun Jan 22 2023 Marc Deop <marcdeop@fedoraproject.org> - 5.26.90-1
+- Initial Package

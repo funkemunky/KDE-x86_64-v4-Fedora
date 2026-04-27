@@ -1,0 +1,29 @@
+summary: Test for bz656530 (sqrtl returns highly incorrect results for some)
+description: |
+    Bug summary: sqrtl returns highly incorrect results for some inputs
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=656530
+
+    Description:
+
+    Escalated to Bugzilla from IssueTracker
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - gcc
+tag:
+  - RHEL61REVIEW
+  - simple
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=656530
+extra-summary: /tools/glibc/Regression/bz656530-sqrtl-returns-highly-incorrect-results-for-some
+extra-task: /tools/glibc/Regression/bz656530-sqrtl-returns-highly-incorrect-results-for-some

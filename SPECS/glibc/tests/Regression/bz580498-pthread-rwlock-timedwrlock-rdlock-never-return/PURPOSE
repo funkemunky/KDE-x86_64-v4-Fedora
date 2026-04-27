@@ -1,0 +1,27 @@
+PURPOSE of /tools/glibc/Regression/bz580498-pthread-rwlock-timedwrlock-rdlock-never-return
+Description: Test for bz580498 (pthread_rwlock_timedwrlock/rdlock() never return)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: pthread_rwlock_timedwrlock/rdlock() never return
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=580498
+
+Description:
+
+Different behavior between RHEL5 and RHEL6 in both pthread_rwlock_timedwrlock()
+and pthread_rwlock_timedrdlock() functions.
+
+If you call one of them with setting a negative number to abs_timeout->tv_sec,
+and a write lock to the specified rwlock has already been acquired by a different thread:
+
+RHEL 5) the function returns with ETIMEDOUT errno, but
+RHEL 6) the function never return (spinning).
+
+According to the man page and specs, EINVAL should be the return value on a negative timespec.
+
+
+     EINVAL The  value  specified by rwlock does not refer to an initialized
+             read-write lock object, or the abs_timeout nanosecond  value  is
+             less than zero or greater than or equal to 1000 million.
+
+
+Apparently this change caused the issue:
+ http://sourceware.org/ml/glibc-cvs/2009-q3/msg00036.html

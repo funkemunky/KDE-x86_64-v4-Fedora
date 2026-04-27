@@ -1,0 +1,24 @@
+summary: Test for bz739184 (Statically-linked binaries that call gethostbyname)
+description: |
+    Bug summary: Statically-linked binaries that call gethostbyname crash when executed.
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=739184
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+  - glibc-static
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=739184
+extra-summary: /tools/glibc/Regression/bz739184-Statically-linked-binaries-that-call-gethostbyname
+extra-task: /tools/glibc/Regression/bz739184-Statically-linked-binaries-that-call-gethostbyname

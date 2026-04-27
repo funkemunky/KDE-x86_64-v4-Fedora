@@ -1,0 +1,23 @@
+summary: Test for BZ#1563046 (getlogin_r return early when linux sentinel value)
+description: |
+    Bug summary: getlogin_r: return early when linux sentinel value is set
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1563046
+
+    TODO: add check with mounting fake /proc/self/loginuid
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1563046
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - glibc-devel
+  - glibc-debuginfo
+  - gdb
+  - gcc
+duration: 30m
+extra-summary:
+  /tools/glibc/Regression/bz1563046-getlogin-r-return-early-when-linux-sentinel-value
+extra-task:
+  /tools/glibc/Regression/bz1563046-getlogin-r-return-early-when-linux-sentinel-value

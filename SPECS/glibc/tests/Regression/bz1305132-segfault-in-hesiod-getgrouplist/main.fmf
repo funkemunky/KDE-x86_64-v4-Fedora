@@ -1,0 +1,17 @@
+summary: Test for bz1305132 (Revisit name server list management in libresolv)
+description: ''
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1305132
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - bind
+  - bind-utils
+  - glibc
+  - nss_hesiod
+duration: 20m
+extra-summary: /tools/glibc/Regression/bz1305132-segfault-in-hesiod-getgrouplist
+extra-task: /tools/glibc/Regression/bz1305132-segfault-in-hesiod-getgrouplist

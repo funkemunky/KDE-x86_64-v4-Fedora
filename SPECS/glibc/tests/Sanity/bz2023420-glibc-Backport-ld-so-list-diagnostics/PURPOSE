@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Sanity/bz2023420-glibc-Backport-ld-so-list-diagnostics
+Description: Test for BZ#2023420 (glibc: Backport ld.so --list-diagnostics)
+Author: Martin Coufal <mcoufal@redhat.com>
+Bug summary: glibc: Backport ld.so --list-diagnostics [rhel-8.6]
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2023420

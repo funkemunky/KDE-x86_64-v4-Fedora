@@ -1,0 +1,17 @@
+summary: Test for BZ#1591268 (glibc Problem with iconv converting ISO8859-1 to)
+description: |
+    Bug summary: glibc: Problem with iconv converting ISO8859-1 to IBM273 [rhel-7]
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1591268
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1591268
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - vim-common
+duration: 5m
+extra-summary: /tools/glibc/Regression/bz1591268-glibc-Problem-with-iconv-converting-ISO8859-1-to
+extra-task: /tools/glibc/Regression/bz1591268-glibc-Problem-with-iconv-converting-ISO8859-1-to

@@ -1,13 +1,15 @@
 # Fedora 43 KDE Copr x86_64-v3 Builder
 
 This repository now targets Copr rather than doing local `rpmbuild -ba` work inside CI.
-It uses Copr's SCM `make_srpm` flow to generate SRPMs from Fedora dist-git content and installs
-a dedicated buildroot macro package so Copr's Fedora 43 `x86_64` builders compile with an
-`x86-64-v3` ISA baseline.
+It uses Copr's SCM `make_srpm` flow to generate SRPMs from repo-local Fedora packaging snapshots
+stored under `SPECS/<package>/`, and installs a dedicated buildroot macro package so Copr's
+Fedora 43 `x86_64` builders compile with an `x86-64-v3` ISA baseline.
 
 ## What changed
 - `.copr/Makefile` is the Copr entrypoint used by the SCM `make_srpm` method.
-- `ci/copr-distgit-make-srpm.py` clones Fedora dist-git, downloads lookaside sources, and builds SRPMs.
+- `SPECS/<package>/` stores the pre-fetched Fedora dist-git snapshot for each package.
+- `ci/prefetch-fedora-specs.py` refreshes those snapshots from Fedora dist-git.
+- `ci/copr-distgit-make-srpm.py` builds SRPMs from the local `SPECS/` snapshots and downloads lookaside sources.
 - `packaging/copr-rpm-macros-x86-64-v3.spec` produces the buildroot macro package that changes Fedora's
   `%__cflags_arch_x86_64_level` to `-v3` while keeping the rest of `redhat-rpm-config` intact.
 - `ci/sync-copr-packages.py` registers or updates Copr SCM package definitions and can queue builds.
@@ -30,7 +32,13 @@ Generate the macro SRPM:
 make -f .copr/Makefile srpm outdir=dist-srpms spec=packaging/copr-rpm-macros-x86-64-v3.spec
 ```
 
-Generate a Fedora dist-git package SRPM the same way Copr will:
+Refresh the local Fedora packaging snapshots:
+
+```bash
+python3 ci/prefetch-fedora-specs.py
+```
+
+Generate a package SRPM the same way Copr will:
 
 ```bash
 make -f .copr/Makefile srpm outdir=dist-srpms spec=konsole

@@ -1,0 +1,19 @@
+enabled: false
+summary: Test for BZ#2115831 (glibc missing .gnu_debuglink section in libc.so.6,)
+description: |
+    Bug summary: glibc: missing .gnu_debuglink section in libc.so.6, redundant annobin symbols and debufginfo for ld.so
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2115831
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2115831
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - elfutils
+  - glibc
+  - glibc-debuginfo
+duration: 20m
+extra-summary: /tools/glibc/Regression/bz2115831-glibc-missing-gnu-debuglink-section-in
+extra-task: /tools/glibc/Regression/bz2115831-glibc-missing-gnu-debuglink-section-in

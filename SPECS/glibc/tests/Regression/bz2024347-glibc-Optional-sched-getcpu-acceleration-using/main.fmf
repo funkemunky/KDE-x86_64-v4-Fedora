@@ -1,0 +1,22 @@
+summary: Test for BZ#2024347 (glibc Optional sched_getcpu acceleration using)
+description: |
+    Bug summary: glibc: Optional sched_getcpu acceleration using rseq
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2024347
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2024347
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-9
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - strace
+duration: 15m
+extra-summary: /tools/glibc/Regression/bz2024347-glibc-Optional-sched-getcpu-acceleration-using
+extra-task: /tools/glibc/Regression/bz2024347-glibc-Optional-sched-getcpu-acceleration-using

@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Standardscompliance/bz692838-indic-update-locales-with-currency-symbol-to
+Description: Test for bz692838 ([indic] update locales with currency symbol to)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: [indic] update locales with currency symbol to U20B9
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=692838

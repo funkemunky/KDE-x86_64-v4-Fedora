@@ -1,0 +1,36 @@
+summary: Test for bz464144, a stack pointer corruption problem
+description: |
+    Test Name: bz464146-sp-corruption - Bugzilla(s) 464146
+    Author: Petr Muller <pmuller@redhat.com>
+    Location: /tools/glibc/Regression/bz464146-sp-corruption
+
+    Short Description: Test for bz464144, a stack pointer corruption problem
+
+
+    Long Description:
+
+    In real life, the problem is only likely to occur with very large applications with hundreds of threads. The result of the bug is that a stack might suddenly jump to an area of virtual memory 4GB away from where it should be.
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - quota-devel
+  - gcc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - NoRHEL3
+  - NoRHEL4
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=464146
+extra-summary: /tools/glibc/Regression/bz464146-sp-corruption
+extra-task: /tools/glibc/Regression/bz464146-sp-corruption

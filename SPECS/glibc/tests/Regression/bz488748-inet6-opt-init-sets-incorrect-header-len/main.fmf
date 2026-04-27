@@ -1,0 +1,29 @@
+summary: Test for bz488748 ([RHEL5] inet6_opt_init() sets incorrect header)
+description: |
+    Bug summary: [RHEL5] inet6_opt_init() sets incorrect header extension length
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=488748
+
+    Description:
+
+    Escalated to Bugzilla from IssueTracker
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - gcc
+  - glibc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=488748
+extra-summary: /tools/glibc/Regression/bz488748-inet6-opt-init-sets-incorrect-header-len
+extra-task: /tools/glibc/Regression/bz488748-inet6-opt-init-sets-incorrect-header-len

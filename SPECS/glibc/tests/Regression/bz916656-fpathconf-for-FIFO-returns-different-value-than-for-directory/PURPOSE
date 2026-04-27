@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz916656-fpathconf-for-FIFO-returns-different-value-than-for-directory
+Description: Tests pathconf and fpathconf on a FIFO and directory
+Author: Arjun Shankar <ashankar@redhat.com>

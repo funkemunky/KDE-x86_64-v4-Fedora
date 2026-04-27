@@ -1,0 +1,21 @@
+summary: Test for BZ#2007417 (glibc ldd segfaults when inspecting vdso/vdso64.so)
+description: |
+    Bug summary: glibc: ldd segfaults when inspecting vdso/vdso64.so
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2007417
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-9
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-gconv-extra
+  - glibc-langpack-en
+duration: 20m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2007417
+extra-summary: /tools/glibc/Regression/bz2007417-glibc-ldd-segfaults-when-inspecting
+extra-task: /tools/glibc/Regression/bz2007417-glibc-ldd-segfaults-when-inspecting

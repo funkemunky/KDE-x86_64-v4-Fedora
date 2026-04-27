@@ -1,0 +1,2 @@
+summary: Upower integration test
+test: bash ./run-it.sh

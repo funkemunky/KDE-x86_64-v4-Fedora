@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/expf-gives-infinity-where-result-finite
+Description: Test for one case, where expf gives an incorrect result
+Author: Petr Muller <pmuller@redhat.com>

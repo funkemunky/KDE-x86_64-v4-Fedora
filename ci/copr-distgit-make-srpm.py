@@ -23,13 +23,17 @@ SOURCE_LINE_PATTERN = re.compile(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Create an SRPM either from a local spec in this repository or by "
-            "cloning a Fedora dist-git package and downloading its lookaside sources."
+            "Create an SRPM from a repo-local spec path or from a package snapshot "
+            "under SPECS/<package>/, downloading Fedora lookaside sources as needed."
         )
     )
-    parser.add_argument("--spec-ref", required=True, help="Local .spec path or Fedora dist-git package name")
+    parser.add_argument("--spec-ref", required=True, help="Local .spec path or package name under SPECS/")
     parser.add_argument("--outdir", required=True, help="Directory where the generated SRPM should be written")
-    parser.add_argument("--branch", default="f43", help="Fedora dist-git branch to clone when spec-ref is a package")
+    parser.add_argument(
+        "--specs-dir",
+        default="SPECS",
+        help="Directory containing repo-local Fedora packaging snapshots",
+    )
     parser.add_argument("--dist", default=".fc43", help="RPM dist suffix to define while generating the SRPM")
     parser.add_argument("--namespace", default="rpms", help="Fedora dist-git namespace")
     parser.add_argument(
@@ -54,6 +58,41 @@ def ensure_within_repo(path: Path) -> Path | None:
     if candidate.is_file() and candidate.suffix == ".spec":
         return candidate
     return None
+
+
+def resolve_package_spec(package_name: str, specs_dir: Path) -> Path | None:
+    package_dir = (REPO_ROOT / specs_dir / package_name).resolve()
+    try:
+        package_dir.relative_to(REPO_ROOT)
+    except ValueError:
+        return None
+    if not package_dir.is_dir():
+        return None
+
+    package_named_spec = package_dir / f"{package_name}.spec"
+    if package_named_spec.is_file():
+        return package_named_spec
+
+    spec_files = sorted(package_dir.glob("*.spec"))
+    if len(spec_files) == 1:
+        return spec_files[0]
+    if len(spec_files) > 1:
+        raise RuntimeError(
+            f"multiple spec files found for {package_name} under {package_dir}; "
+            "use an explicit spec path"
+        )
+    return None
+
+
+def package_name_for_specs_path(spec_path: Path, specs_dir: Path) -> str | None:
+    specs_root = (REPO_ROOT / specs_dir).resolve()
+    try:
+        relative = spec_path.resolve().relative_to(specs_root)
+    except ValueError:
+        return None
+    if len(relative.parts) < 2:
+        return None
+    return relative.parts[0]
 
 
 def hash_file(path: Path, algorithm: str) -> str:
@@ -92,6 +131,7 @@ def download_file(url: str, destination: Path, *, algorithm: str, checksum: str,
 
 def build_srpm(spec_path: Path, *, source_dir: Path, outdir: Path, dist: str) -> Path:
     outdir.mkdir(parents=True, exist_ok=True)
+    existing = {path.resolve() for path in outdir.glob("*.src.rpm")}
     with tempfile.TemporaryDirectory(prefix="copr-srpm-topdir-") as topdir_name:
         topdir = Path(topdir_name)
         command = [
@@ -117,7 +157,11 @@ def build_srpm(spec_path: Path, *, source_dir: Path, outdir: Path, dist: str) ->
             command.extend(["--define", f"dist {dist}"])
         run(command, cwd=source_dir)
 
-    srpms = sorted(outdir.glob("*.src.rpm"), key=lambda path: path.stat().st_mtime, reverse=True)
+    srpms = sorted(
+        (path for path in outdir.glob("*.src.rpm") if path.resolve() not in existing),
+        key=lambda path: path.stat().st_mtime,
+        reverse=True,
+    )
     if not srpms:
         raise RuntimeError(f"rpmbuild did not produce an SRPM in {outdir}")
     return srpms[0]
@@ -168,75 +212,43 @@ def download_lookaside_sources(
         )
 
 
-def build_from_distgit(
-    package_name: str,
-    *,
-    branch: str,
-    dist: str,
-    namespace: str,
-    lookaside_baseurl: str,
-    attempts: int,
-    outdir: Path,
-) -> Path:
-    clone_url = f"https://src.fedoraproject.org/{namespace}/{package_name}.git"
-    with tempfile.TemporaryDirectory(prefix=f"{package_name}-distgit-") as tempdir_name:
-        tempdir = Path(tempdir_name)
-        package_dir = tempdir / package_name
-        for attempt in range(1, attempts + 1):
-            try:
-                if package_dir.exists():
-                    shutil.rmtree(package_dir)
-                run(
-                    [
-                        "git",
-                        "clone",
-                        "--depth",
-                        "1",
-                        "--branch",
-                        branch,
-                        clone_url,
-                        str(package_dir),
-                    ]
-                )
-                break
-            except subprocess.CalledProcessError:
-                if attempt == attempts:
-                    raise
-                time.sleep(attempt * 3)
-        spec_files = sorted(package_dir.glob("*.spec"))
-        if not spec_files:
-            raise RuntimeError(f"no spec file found in {clone_url} branch {branch}")
-        spec_path = spec_files[0]
-        download_lookaside_sources(
-            package_name,
-            package_dir,
-            namespace=namespace,
-            lookaside_baseurl=lookaside_baseurl,
-            attempts=attempts,
-        )
-        return build_srpm(spec_path, source_dir=package_dir, outdir=outdir, dist=dist)
-
-
 def main() -> int:
     args = parse_args()
     outdir = Path(args.outdir).resolve()
+    specs_dir = Path(args.specs_dir)
 
     local_spec = ensure_within_repo(Path(args.spec_ref))
     if local_spec is not None:
+        package_name = package_name_for_specs_path(local_spec, specs_dir)
+        if package_name is not None:
+            download_lookaside_sources(
+                package_name,
+                local_spec.parent,
+                namespace=args.namespace,
+                lookaside_baseurl=args.lookaside_baseurl.rstrip("/"),
+                attempts=args.retry_count,
+            )
         srpm = build_srpm(local_spec, source_dir=local_spec.parent, outdir=outdir, dist=args.dist)
         print(f"built local SRPM {srpm.name}")
         return 0
 
-    srpm = build_from_distgit(
+    package_spec = resolve_package_spec(args.spec_ref, specs_dir)
+    if package_spec is None:
+        raise RuntimeError(
+            f"spec reference {args.spec_ref!r} is not a repo-local spec path and no "
+            f"snapshot was found under {(REPO_ROOT / specs_dir / args.spec_ref)!s}"
+        )
+
+    package_dir = package_spec.parent
+    download_lookaside_sources(
         args.spec_ref,
-        branch=args.branch,
-        dist=args.dist,
+        package_dir,
         namespace=args.namespace,
         lookaside_baseurl=args.lookaside_baseurl.rstrip("/"),
         attempts=args.retry_count,
-        outdir=outdir,
     )
-    print(f"built dist-git SRPM {srpm.name}")
+    srpm = build_srpm(package_spec, source_dir=package_dir, outdir=outdir, dist=args.dist)
+    print(f"built package SRPM {srpm.name}")
     return 0
 
 

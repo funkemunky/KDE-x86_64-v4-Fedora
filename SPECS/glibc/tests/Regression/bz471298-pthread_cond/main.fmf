@@ -1,0 +1,33 @@
+summary: Contains one simple testcase, hanging when exhibiting the bug
+description: |
+    Test Name: bz471298-pthread_cond - Bugzilla(s) 471298
+    Author: Petr Muller <pmuller@redhat.com>
+    Location: /tools/glibc/Regression/bz471298-pthread_cond
+
+    Short Description: Contains one simple testcase, hanging when exhibiting the bug
+
+
+    Long Description:
+
+    Contains one simple testcase, hanging when exhibiting the bug
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=471298
+extra-summary: /tools/glibc/Regression/bz471298-pthread_cond
+extra-task: /tools/glibc/Regression/bz471298-pthread_cond

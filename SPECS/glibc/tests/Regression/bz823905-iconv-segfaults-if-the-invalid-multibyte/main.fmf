@@ -1,0 +1,23 @@
+summary: Test for BZ#823905 (iconv() segfaults if the invalid multibyte)
+description: |
+    Bug summary: iconv() segfaults if the invalid multibyte character 0xffff is input when converting from IBM930
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=823905
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-common
+  - vim-common
+tag:
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=823905
+extra-summary: /tools/glibc/Regression/bz823905-iconv-segfaults-if-the-invalid-multibyte
+extra-task: /tools/glibc/Regression/bz823905-iconv-segfaults-if-the-invalid-multibyte

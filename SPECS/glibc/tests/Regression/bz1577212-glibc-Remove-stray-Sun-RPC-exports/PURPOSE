@@ -1,0 +1,9 @@
+PURPOSE of /tools/glibc/Regression/bz1577212-glibc-Remove-stray-Sun-RPC-exports
+Description: Test for BZ#1577212 (glibc Remove stray Sun RPC exports)
+Author: Alexandra Hájková <ahajkova@redhat.com>
+Bug summary: glibc: Remove stray Sun RPC exports
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1577212
+
+Remove stray Sun RPC exports: In this context, “remove“ means that the default symbol version (the @@ part)
+is gone, and there is only a compat symbol (with a single @).  We cannot remove the compat symbols for
+backwards compatibility reasons.

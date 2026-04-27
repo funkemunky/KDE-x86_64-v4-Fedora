@@ -1,0 +1,71 @@
+summary: Test for bz585674 (free() race in mcheck hooks)
+description: |
+    Bug summary: free() race in mcheck hooks
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=585674
+
+    Description:
+
+    Description of problem:
+    segfaults can occur with MEMCHECK_ALLOC_=3 enabled.  This was reported and fixed upstream at
+    http://sourceware.org/bugzilla/show_bug.cgi?id=10282
+    http://sourceware.org/git/?p=glibc.git;a=commitdiff;h=cc49a5a8837be1f9307b167d9bf4399798a847c9
+
+    Version-Release number of selected component (if applicable):
+    glibc-2.5-49
+
+    How reproducible:
+    every time
+
+    Steps to Reproduce:
+    1. cat malloc_test.c
+    #include <stdlib.h>
+    #include <unistd.h>
+
+    int main(void)
+    {
+    #pragma omp parallel num_threads(256)
+     while (1) {
+       void *ptr = malloc(rand() % 65536);
+       usleep((rand() % 100) * 100);
+       free(ptr);
+       usleep((rand() % 100) * 100);
+     }
+     return 0;
+    }
+
+    2. gcc -fopenmp -g -o malloc_check malloc_check.c
+
+    3. MALLOC_CHECK_=3 ./malloc_test
+      
+    Actual results:
+    malloc: using debugging hooks
+    *** glibc detected *** ./malloc_test: free(): invalid pointer: 0x00000000043e9c90 ***
+
+
+    Expected results:
+    no segfaults
+
+    Additional info:
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - gcc
+  - libgomp
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 90m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=585674
+extra-summary: /tools/glibc/Regression/bz585674-free-race-in-mcheck-hooks
+extra-task: /tools/glibc/Regression/bz585674-free-race-in-mcheck-hooks

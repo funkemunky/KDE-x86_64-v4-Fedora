@@ -1,0 +1,21 @@
+summary: Tests pathconf and fpathconf on a FIFO and directory
+description: ''
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - glibc-headers
+tag:
+  - simple
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=916656
+extra-summary: /tools/glibc/Regression/bz916656-fpathconf-for-FIFO-returns-different-value-than-for-directory
+extra-task: /tools/glibc/Regression/bz916656-fpathconf-for-FIFO-returns-different-value-than-for-directory

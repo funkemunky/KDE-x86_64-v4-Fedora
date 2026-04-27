@@ -1,0 +1,8 @@
+PURPOSE of /tools/glibc/Regression/bz1330705-open-and-openat-ignore-mode-with-O-TMPFILE
+Description: Test for BZ#1330705 (open() and openat() ignore 'mode' with O_TMPFILE)
+Author: Sergey Kolosov <skolosov@redhat.com>
+Bug summary: open() and openat() ignore 'mode' with O_TMPFILE on newer kernels
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1330705
+
+The test program calls openat with __O_TMPFILE(O_TMPFILE) flag and checks if a file was created with right mode(0600).
+The kernel must support O_TMPFILE(be >= 3.11, or with the backported feature).

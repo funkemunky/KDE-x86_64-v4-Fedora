@@ -1,0 +1,11 @@
+main: top of loop: sval = 0
+main: calling sem_timedwait
+thread: calling sem_timedwait with bogus tv_nsec
+thread: sem_timedwait: errno = 22 strerror = Invalid argument
+thread: calling sem_post
+main: sem_timedwait: success
+main: calling sem_post
+main: top of loop: sval = 1
+main: calling sem_timedwait
+main: sem_timedwait: success
+main: calling sem_post

@@ -1,0 +1,9 @@
+PURPOSE of /tools/glibc/Regression/bz656530-sqrtl-returns-highly-incorrect-results-for-some
+Description: Test for bz656530 (sqrtl returns highly incorrect results for some)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: sqrtl returns highly incorrect results for some inputs
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=656530
+
+Description:
+
+Escalated to Bugzilla from IssueTracker

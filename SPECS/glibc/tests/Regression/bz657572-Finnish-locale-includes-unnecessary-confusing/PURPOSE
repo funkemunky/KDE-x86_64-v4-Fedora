@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz657572-Finnish-locale-includes-unnecessary-confusing
+Description: Test for bz657572 (Finnish locale includes unnecessary, confusing)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Finnish locale includes unnecessary, confusing trailing spaces in the abbreviated months
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=657572

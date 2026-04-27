@@ -1,0 +1,41 @@
+summary: Test for bz692838 ([indic] update locales with currency symbol to)
+description: |
+    Bug summary: [indic] update locales with currency symbol to U20B9
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=692838
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-common
+  - sed
+  - glibc-langpack-ar
+  - glibc-langpack-as
+  - glibc-langpack-bn
+  - glibc-langpack-en
+  - glibc-langpack-gu
+  - glibc-langpack-hi
+  - glibc-langpack-kn
+  - glibc-langpack-kok
+  - glibc-langpack-ks
+  - glibc-langpack-ml
+  - glibc-langpack-mr
+  - glibc-langpack-or
+  - glibc-langpack-pa
+  - glibc-langpack-sa
+  - glibc-langpack-sd
+  - glibc-langpack-ta
+  - glibc-langpack-te
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=692838
+extra-summary: /tools/glibc/Standardscompliance/bz692838-indic-update-locales-with-currency-symbol-to
+extra-task: /tools/glibc/Standardscompliance/bz692838-indic-update-locales-with-currency-symbol-to

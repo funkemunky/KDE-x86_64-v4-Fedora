@@ -1,0 +1,6 @@
+# Release tarballs.
+/glibc-*.tar.[gx]z
+# Generated (source) RPMs.
+/*.rpm
+# Expanded source trees.
+/glibc-*/

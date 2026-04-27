@@ -1,0 +1,78 @@
+summary: Test for bz522528 (pthread_join() hangs if a thread calls setuid())
+description: |
+    Bug summary: pthread_join() hangs if a thread calls setuid()
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=522528
+
+    Description:
+
+    Created an attachment (id=360523)
+    reproducer's source file
+
+    Description of problem:
+
+    When a program creates a thread which calls setuid() and terminates, the other
+    thread trying to wait for it hangs.
+
+
+    Version-Release number of selected component (if applicable):
+
+    RHEL5 (2.5-34), also RHEL4 and the newest upstream sources
+
+
+    How reproducible:
+
+    always
+
+
+    Steps to Reproduce:
+
+    1. Compile attached source file of reproducer:
+
+    $ gcc -o reproducer reproducer.c -lpthread
+
+    2. and run it:
+
+    $ ./reproducer
+
+      
+    Actual results:
+
+    program hangs
+
+
+    Expected results:
+
+    program should end without hanging
+
+
+    Additional info:
+
+    This bug has appeared quite a long ago, you can find it in a sourceware BZ with existing patch at:
+
+    http://sources.redhat.com/bugzilla/show_bug.cgi?id=3270#c2
+
+    The patch solves the problem, but I have no idea why this hasn't been applied in the upstream already. I have attached a slightly modiffied version of the patch to be able to be applied and built on RHEL5 glibc sources and it works and solves the problem.
+
+    There is also existing BZ for RHEL4:
+
+    https://bugzilla.redhat.com/show_bug.cgi?id=248671
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 75m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=522528
+extra-summary: /tools/glibc/Regression/bz522528-pthread-join-hangs-if-a-thread-calls-setuid
+extra-task: /tools/glibc/Regression/bz522528-pthread-join-hangs-if-a-thread-calls-setuid

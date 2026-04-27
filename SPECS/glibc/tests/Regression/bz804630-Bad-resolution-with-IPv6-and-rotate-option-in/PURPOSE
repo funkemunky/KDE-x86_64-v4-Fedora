@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz804630-Bad-resolution-with-IPv6-and-rotate-option-in
+Description: Test for BZ#804630 (Bad resolution with IPv6 and rotate option in)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Bad resolution with IPv6 and rotate option in resolv.conf
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=804630

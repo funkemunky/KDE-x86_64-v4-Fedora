@@ -1,0 +1,33 @@
+PURPOSE of /tools/glibc/Regression/bz566712-aio-write-ll-corruption
+Description: Test for bz566712 (If pthread_create fails in aio_write, requests)
+Author: Petr Muller <pmuller@redhat.com>
+Bug summary: If pthread_create fails in aio_write, requests linked list is corrupted
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=566712
+
+Description:
+
+Description of problem:
+When one calls aio_write, it internally calls __aio_enqueue_request, which will in turn call aio_create_helper_thread.  If thread creation fails, the newly created request (newp in the code) will still be in the requests linked list, but it will be freed later in __aio_enqueue_request.
+
+A subsequent call to aio_write will cause a segmentation fault.
+
+Version-Release number of selected component (if applicable):
+glibc-2.5-*.el5
+
+How reproducible:
+100%
+
+Steps to Reproduce:
+There's a test case from Neil Vachharajani in upstream bugzilla:
+
+http://sources.redhat.com/bugzilla/attachment.cgi?id=4198&action=view
+
+  
+Actual results:
+If compiled -DCRASH the program segfaults.
+
+Expected results:
+If compiled -DCRASH the program does not segfault.
+
+Additional info:
+http://sources.redhat.com/bugzilla/show_bug.cgi?id=10643

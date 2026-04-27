@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz1305132-segfault-in-hesiod-getgrouplist
+Description: What the test does
+Author: Arjun Shankar <ashankar@redhat.com>

@@ -1,0 +1,24 @@
+summary: When a file was first open as NON BUFFERED, and then we change it into FULL
+    BUFFERED, this will take no effect (PR6719)
+description: ''
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - expect
+  - tcl
+  - gcc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+extra-summary: /tools/glibc/Regression/setvbuf-to-full-not-working
+extra-task: /tools/glibc/Regression/setvbuf-to-full-not-working

@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz819430-fnmatch-fails-when-wildcard-is-applied-on
+Description: Test for BZ#819430 (fnmatch() fails when '*' wildcard is applied on)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: fnmatch() fails when '*' wildcard is applied on the file name containing multi-byte character(s)
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=819430

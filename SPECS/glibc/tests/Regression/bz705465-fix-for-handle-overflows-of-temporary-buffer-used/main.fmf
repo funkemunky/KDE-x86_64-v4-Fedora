@@ -1,0 +1,60 @@
+summary: Test for bz705465 (fix for handle overflows of temporary buffer used)
+description: |
+    Bug summary: fix for handle overflows of temporary buffer used to handle multi lookups locally.
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=705465
+
+    Description:
+
+    Description of problem:
+
+    An issue in glibc causes threaded processes to not get all the groups assigned to that process. Because the pointer to the next group entry can be moved we have seen applications with incomplete group membership.
+
+    This issue is resolved by several upstream patches including:
+
+    http://sources.redhat.com/git/gitweb.cgi?p=glibc.git;a=commit;h=ab8eed78a6614f7e7e5a908efdcb9f390f849563
+
+    Also, it is resolved with the patch for glibc BZ 10484:
+
+    [BZ #10484]
+    * nss/nss_files/files-hosts.c (HOST_DB_LOOKUP): Handle overflows of temporary buffer used to handle multi lookups locally.
+    * Versions [libc] (GLIBC_PRIVATE): Export __libc_alloca_cutoff.
+
+    I will attach the two patches that apply to the RHEL 6 glibc that resolve this problem.
+    Version-Release number of selected component (if applicable):
+
+
+    How reproducible:
+
+
+    Steps to Reproduce:
+    1.
+    2.
+    3.
+      
+    Actual results:
+
+
+    Expected results:
+
+
+    Additional info:
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - nss_db
+  - gcc
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=705465
+extra-summary: /tools/glibc/Regression/bz705465-fix-for-handle-overflows-of-temporary-buffer-used
+extra-task: /tools/glibc/Regression/bz705465-fix-for-handle-overflows-of-temporary-buffer-used

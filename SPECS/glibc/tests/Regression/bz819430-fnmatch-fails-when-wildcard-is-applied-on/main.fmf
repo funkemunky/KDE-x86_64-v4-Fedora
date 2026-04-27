@@ -1,0 +1,24 @@
+summary: Test for BZ#819430 (fnmatch() fails when '*' wildcard is applied on)
+description: |
+    Bug summary: fnmatch() fails when '*' wildcard is applied on the file name containing multi-byte character(s)
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=819430
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - gcc
+tag:
+  - simple
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=819430
+extra-summary: /tools/glibc/Regression/bz819430-fnmatch-fails-when-wildcard-is-applied-on
+extra-task: /tools/glibc/Regression/bz819430-fnmatch-fails-when-wildcard-is-applied-on

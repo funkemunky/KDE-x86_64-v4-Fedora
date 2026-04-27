@@ -1,0 +1,93 @@
+summary: Test for bz455360 ([RHEL4] vfprintf() call goes into recursive)
+description: |
+    Bug summary: [RHEL4] vfprintf() call goes into recursive overflow and crashes with a segfault
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=455360
+
+    Description:
+
+    Description of problem in short (details sent next thru IT):
+
+    Sporadically, when under load, the client is seeing tibco EMS processes be
+    killed by segfaults. Getting a robust diagnosis has proven difficult, but from
+    what can be told, it appears that somehow a vfprintf() call is getting into a
+    state where it loops with:
+
+    <snip>
+    6  0x008602fa in *__GI___overflow (f=0xf7fe8688, ch=0) at genops.c:240
+    #7  0x0083afe6 in _IO_helper_overflow (s=0xf7fe8688, c=Variable "c" is not
+    available.
+    ) at vfprintf.c:2058
+    </snip>
+
+    It recurses for quite some time in glibc and then crashes with a segfault. I've
+    just gotten the application binary (stripped unfortunately) and thus could
+    actually get something from the core.
+
+    Customer's analysis:
+    we have seen this issue before. What's going wrong is that we are calling
+    vfprintf to perform a message trace including the body and the functions in
+    glibc are recursing approximately 373909  frames and then it crashed.  
+
+
+    <snip>
+    #373902 0x008602fa in *__GI___overflow (f=0xf7fe8688, ch=0) at genops.c:240
+    #373903 0x0083afe6 in _IO_helper_overflow (s=0xf7fe8688, c=-1)
+       at vfprintf.c:2058
+    #373904 0x0086096f in _IO_default_xsputn (f=0xf7fe8688, data=0x32046928,
+       n=10285) at genops.c:478
+    #373905 0x0083e88e in _IO_vfprintf (s=0xf7fe8688,
+       format=0x8321890 "%s %s from %s: connID=%lld prodID=%lld msgID='%s' %s
+    mode=%s %s='%s'%s%s", ap=0xf7feae90 "ïJ©\236À¦\004\204:Z\\Æ\\ò%$Ü\223K")
+       at vfprintf.c:1553
+    #373906 0x0083b0ac in buffered_vfprintf (s=0x929460,
+       format=0x8321890 "%s %s from %s: connID=%lld prodID=%lld msgID='%s' %s
+    mode=%s %s='%s'%s%s", args=) at vfprintf.c:2144
+    #373907 0x0083b2eb in _IO_vfprintf (s=0x929460,
+       format=0x8321890 "%s %s from %s: connID=%lld prodID=%lld msgID='%s' %s
+    mode=%s %s='%s'%s%s", ap=0xf7feae58 "Ð¯þ÷lê2\bP°þ÷;\216K") at vfprintf.c:1264
+    #373908 0x0811ba34 in _authenticate ()
+    #373909 0x0811bc4c in _authenticate ()
+    #373910 0x080f7f3c in _authenticate ()
+    #373911 0x080e8e6a in _authenticate ()
+    #373912 0x080e6d88 in _authenticate ()
+    #373913 0x080e6ed0 in _authenticate ()
+    #373914 0x0807d4fd in ?? ()
+    #373915 0x2846afc8 in ?? ()
+    #373916 0x0830e880 in _IO_stdin_used ()
+    #373917 0x00000432 in ?? ()
+    #373918 0x0830e86d in _IO_stdin_used ()
+    #373919 0x0830e86d in _IO_stdin_used ()
+    #373920 0x00000000 in ?? ()
+    </snip> 
+
+
+    Version-Release number of selected component (if applicable):
+    glibc-2.3.4-2.39
+
+    Additional info:
+
+    I have the core and binary set up on a lab host which has the correct version of
+    glibc installed. Feel free to work on that host:
+
+    dhcp139.gsslab.rdu.redhat.com (root:redhat)
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=455360
+extra-summary: /tools/glibc/Regression/bz455360-RHEL4-vfprintf-call-goes-into-recursive
+extra-task: /tools/glibc/Regression/bz455360-RHEL4-vfprintf-call-goes-into-recursive

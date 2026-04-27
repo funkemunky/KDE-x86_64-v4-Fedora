@@ -1,0 +1,10 @@
+Test Name: bz471298-pthread_cond - Bugzilla(s) 471298
+Author: Petr Muller <pmuller@redhat.com>
+Location: /tools/glibc/Regression/bz471298-pthread_cond
+
+Short Description: Contains one simple testcase, hanging when exhibiting the bug
+
+
+Long Description:
+
+Contains one simple testcase, hanging when exhibiting the bug

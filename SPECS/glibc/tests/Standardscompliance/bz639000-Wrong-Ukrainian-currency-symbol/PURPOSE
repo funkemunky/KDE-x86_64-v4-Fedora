@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Standardscompliance/bz639000-Wrong-Ukrainian-currency-symbol
+Description: Test for bz639000 (Wrong Ukrainian currency symbol)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Wrong Ukrainian currency symbol
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=639000

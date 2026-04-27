@@ -1,0 +1,24 @@
+summary: Calls ftell after write and verifies that buf is not flushed
+description: ''
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - glibc-headers
+  - strace
+tag:
+  - simple
+  - NoRHEL6
+  - NoRHEL5
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=577950
+extra-summary: /tools/glibc/Regression/bz577950-ftell-after-write-causes-glibc-to-flush-buffer
+extra-task: /tools/glibc/Regression/bz577950-ftell-after-write-causes-glibc-to-flush-buffer

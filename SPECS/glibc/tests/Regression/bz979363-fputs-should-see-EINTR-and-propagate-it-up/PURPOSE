@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz979363-fputs-should-see-EINTR-and-propagate-it-up
+Description: Tests fputs EINTR when writing to a blocking, full stream
+Author: Arjun Shankar <ashankar@redhat.com>

@@ -1,0 +1,23 @@
+summary: Test for BZ#1430477 (glibc Missing else branch in __libc_calloc)
+description: |
+    Bug summary: glibc: Missing else branch in __libc_calloc
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1430477
+
+    The test builds glibc, then does malloc.o recompilation and does checking
+    that there are no missing initializations for oldtop and oldtopsize
+    variables.
+contact: Sergey Kolosov <skolosov@redhat.com>
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1430477
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - rpm-build
+duration: 2h
+extra-summary:
+  /tools/glibc/Regression/bz1430477-glibc-Missing-else-branch-in-libc-calloc
+extra-task:
+  /tools/glibc/Regression/bz1430477-glibc-Missing-else-branch-in-libc-calloc

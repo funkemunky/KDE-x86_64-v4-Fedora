@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz694386-POWER4-strncmp-crashes-reading-past-zero-byte
+Description: Test for bz694386 (POWER4 strncmp crashes reading past zero byte)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: POWER4 strncmp crashes reading past zero byte
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=694386

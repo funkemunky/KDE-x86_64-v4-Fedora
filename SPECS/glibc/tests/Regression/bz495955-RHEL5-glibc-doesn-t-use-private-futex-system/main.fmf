@@ -1,0 +1,66 @@
+summary: Test for bz495955 ([RHEL5] glibc doesn't use private futex system)
+description: |
+    Bug summary: [RHEL5] glibc doesn't use private futex system calls for pthread_mutex calls
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=495955
+
+    Description:
+
+    Created an attachment (id=339722)
+    private mutex test case
+
+    As I understand it, RHEL 5.3 is supposed to have pulled in the change to use PTHREAD_PROCESS_PRIVATE by default with the various pthread_mutex calls.  While testing my recent requeue_pi code, I was seeing some unexpected behaviour on RHEL5.3 that didn't occur on FC10.  Specifically, regardless of what I set the mutexattr pshared attribute to, glibc would make the shared versions of the futex calls. I've written the attached testcase to illustrate.  It creates a PI mutex, and will set the pshared attribute to whatever you specify in the options, or use the OS default if you use no options.  Using strace -f you can see which futex syscalls glibc used.
+
+    Compile with:
+    # gcc -lrt -lpthread priv-mutex.c -o priv-mutex
+
+    Note: the ETIMEDOUT is intentional in the output below.
+
+    On Fedora Core 10 with glibc 2.9:
+
+    Default is private:
+    [root@elm3b160 dvhart]# strace -f 2>&1 ./priv-mutex | grep FUTEX_LOCK_PI
+    [pid 13433] futex(0x6015e0, FUTEX_LOCK_PI_PRIVATE, 1) = -1 ETIMEDOUT (Connection timed out)
+
+    Specifying private works:
+    [root@elm3b160 dvhart]# strace -f 2>&1 ./priv-mutex -p | grep FUTEX_LOCK_PI
+    [pid 13437] futex(0x6015e0, FUTEX_LOCK_PI_PRIVATE, 1) = -1 ETIMEDOUT (Connection timed out)
+
+    Specifying shared works:
+    [root@elm3b160 dvhart]# strace -f 2>&1 ./priv-mutex -s | grep FUTEX_LOCK_PI
+    [pid 13441] futex(0x6015e0, FUTEX_LOCK_PI, 1) = -1 ETIMEDOUT (Connection timed out)
+
+
+    On RHEL5.3:
+
+    Default uses shared (I expected private here):
+    [root@elm3c31 dvhart]# strace -f 2>&1 ./priv-mutex | grep FUTEX_LOCK_PI
+    [pid  9051] futex(0x6015c0, FUTEX_LOCK_PI, 1) = -1 ETIMEDOUT (Connection timed out)
+
+    Setting PTHREAD_PROCESS_PRIVATE has no effect:
+    [root@elm3c31 dvhart]# strace -f 2>&1 ./priv-mutex -p | grep FUTEX_LOCK_PI
+    [pid  9055] futex(0x6015c0, FUTEX_LOCK_PI, 1) = -1 ETIMEDOUT (Connection timed out)
+
+    Specifying shared works as expected:
+    [root@elm3c31 dvhart]# strace -f 2>&1 ./priv-mutex -s | grep FUTEX_LOCK_PI
+    [pid  9059] futex(0x6015c0, FUTEX_LOCK_PI, 1) = -1 ETIMEDOUT (Connection timed out)
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - strace
+tag:
+  - simple
+  - tier1_mfranc
+  - mfranc_stable
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=495955
+extra-summary: /tools/glibc/Regression/bz495955-RHEL5-glibc-doesn-t-use-private-futex-system
+extra-task: /tools/glibc/Regression/bz495955-RHEL5-glibc-doesn-t-use-private-futex-system

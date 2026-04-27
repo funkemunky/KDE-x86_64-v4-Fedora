@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz731042-pthread-create-dumps-core-when-it-fails-to-set
+Description: Test for bz731042 (pthread_create dumps core when it fails to set)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: pthread_create dumps core when it  fails to set real time policy
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=731042

@@ -1,0 +1,30 @@
+From 50de20ad885c2e74fc8781ad6952656385afb4fe Mon Sep 17 00:00:00 2001
+From: Kai Uwe Broulik <kde@privat.broulik.de>
+Date: Wed, 16 Apr 2025 17:27:29 +0200
+Subject: [PATCH] osd: Create OsdManager after QGuiApplication
+
+Doing any major Qt stuff before creating the qApp doesn't really work.
+
+BUG: 502486
+---
+ osd/main.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/osd/main.cpp b/osd/main.cpp
+index 833a670ae..aa9599133 100644
+--- a/osd/main.cpp
++++ b/osd/main.cpp
+@@ -12,9 +12,9 @@
+ 
+ int main(int argc, char **argv)
+ {
+-    KScreen::OsdManager osdManager;
+     LayerShellQt::Shell::useLayerShell();
+     QGuiApplication app(argc, argv);
+     QGuiApplication::setQuitOnLastWindowClosed(false);
++    KScreen::OsdManager osdManager;
+     return app.exec();
+ }
+-- 
+GitLab
+

@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz730379-libresolv-is-not-compiled-with-the-stack-protector
+Description: Test for bz730379 (libresolv is not compiled with the stack protector)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: libresolv is not compiled with the stack protector enabled
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=730379

@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz829222-rpc-file-in-etc-folder-not-marked-as-configuration-file
+Description: Checks if the /etc/rpc file is marked as a configuration file after updating of glibc.
+Author: David Kaspar <dkaspar@redhat.com>

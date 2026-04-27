@@ -1,0 +1,23 @@
+summary: Test for bz750531 (htons() gives warning if compiled with gcc)
+description: |
+    Bug summary: htons() gives warning if compiled with gcc -Wconversion
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=750531
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+tag:
+  - rhel-6.3
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 18m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=750531
+extra-summary: /tools/glibc/Regression/bz750531-htons-gives-warning-if-compiled-with-gcc
+extra-task: /tools/glibc/Regression/bz750531-htons-gives-warning-if-compiled-with-gcc

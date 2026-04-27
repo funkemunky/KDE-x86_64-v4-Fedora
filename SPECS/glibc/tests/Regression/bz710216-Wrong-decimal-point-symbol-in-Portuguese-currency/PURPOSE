@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz710216-Wrong-decimal-point-symbol-in-Portuguese-currency
+Description: Test for BZ#710216 (Wrong decimal point symbol in Portuguese currency)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Wrong decimal point symbol in Portuguese currency
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=710216

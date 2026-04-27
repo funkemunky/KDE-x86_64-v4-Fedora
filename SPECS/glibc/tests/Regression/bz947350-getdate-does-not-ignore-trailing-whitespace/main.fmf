@@ -1,0 +1,23 @@
+summary: Calls getdate function with leading and trailing whitespace
+description: ''
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - glibc-headers
+tag:
+  - simple
+  - NoRHEL6
+  - NoRHEL5
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=947350
+extra-summary: /tools/glibc/Regression/bz947350-getdate-does-not-ignore-trailing-whitespace
+extra-task: /tools/glibc/Regression/bz947350-getdate-does-not-ignore-trailing-whitespace

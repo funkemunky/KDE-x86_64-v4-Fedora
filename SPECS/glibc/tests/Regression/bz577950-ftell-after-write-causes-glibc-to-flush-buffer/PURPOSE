@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz577950-ftell-after-write-causes-glibc-to-flush-buffer
+Description: Calls ftell after write and verifies that buf is not flushed
+Author: Arjun Shankar <ashankar@redhat.com>

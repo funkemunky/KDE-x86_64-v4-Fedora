@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Sanity/basic-linking-sanity
+Description: Test contains few testcases linking to various glibc libraries. Testing if testcases can be successfuly linked and run
+Author: Petr Muller <pmuller@redhat.com>

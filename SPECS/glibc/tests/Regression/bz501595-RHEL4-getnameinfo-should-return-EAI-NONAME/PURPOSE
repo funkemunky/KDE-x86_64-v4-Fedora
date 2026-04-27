@@ -1,0 +1,48 @@
+PURPOSE of /tools/glibc/Regression/bz501595-RHEL4-getnameinfo-should-return-EAI-NONAME
+Description: Test for bz501595 ([RHEL4] getnameinfo() should return EAI_NONAME)
+Author: Petr Muller <pmuller@redhat.com>
+Bug summary: [RHEL4] getnameinfo() should return EAI_NONAME when both nodename and servname are set to null and flag is set to NI_NAMEREQD
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=501595
+
+Description:
+
++++ This bug was initially created as a clone of Bug #489419 +++
+
+Description of Problem:
+glibc getnameinfo() returns 0 when both nodename and servname are set to null and flag is set to 'NI_NAMEREQD'.
+
+The synopsis of function getnameinfo is:
+       int getnameinfo(const struct sockaddr *sa, socklen_t salen, char *node, socklen_t nodelen, char *service, socklen_t servicelen, int flags);
+
+RFC3493 tells that getnameinfo() should returns 'EAI_NONAME' when both nodename and servname are null.  So when use getnameinfo() with both nodename and servname are null and the NI_NAMEREQD flag is set, glibc should return 'EAI_NONAME' rather than 0.
+
+
+Version-Release number of selected component:
+glibc-2.3.4-2.43
+
+
+How reproducible:
+every time
+
+
+Step to Reproduce:
+1. gcc function-nodename-servname-null.c
+2. ./a.out
+
+
+Actual Results:
+# ./a.out
+==Both nodename and servname are null if the NI_NAMEREQD flag is set==
+ERROR:return 0, expect error EAI_NONAME
+<=== NG ===>
+
+
+Expected Results:
+# ./a.out
+==Both nodename and servname are null if the NI_NAMEREQD flag is set==
+<=== OK ===>
+
+
+Additional Info:
+Upstream patch:
+http://sourceware.org/cgi-bin/cvsweb.cgi/libc/inet/getnameinfo.c.diff?r1=1.36&r2=1.37&cvsroot=glibc

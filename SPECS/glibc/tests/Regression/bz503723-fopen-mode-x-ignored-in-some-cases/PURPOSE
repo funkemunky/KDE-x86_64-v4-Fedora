@@ -1,0 +1,38 @@
+PURPOSE of /tools/glibc/Regression/bz503723-fopen-mode-x-ignored-in-some-cases
+Description: Test for bz503723 (fopen mode 'x' ignored in some cases)
+Author: Petr Muller <pmuller@redhat.com>
+Bug summary: fopen mode 'x' ignored in some cases
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=503723
+
+Description:
+
+Created an attachment (id=346240)
+fopen.c - test for fopen modes
+
+Description of problem:
+O_EXCL is not used if mode is "wbex", but O_EXCL is used if mode is "wbxe".
+
+This bug can cause security vulnerabilities in software relying on this glibc extension.
+
+Version-Release number of selected component (if applicable):
+2.10.1-2, 2.9.90-3
+
+How reproducible:
+always
+
+Steps to Reproduce:
+1. compile attached C source file
+2. run with options ababab wbex, and ababab wbxe
+3.
+  
+Actual results:
+'x' may be ignored
+
+Expected results:
+'x' not ignored
+
+Additional info:
+$ strace -eopen ./a.out ababab wbxe 2>&1 | grep ababab ; rm -f ababab
+open("ababab", O_WRONLY|O_CREAT|O_EXCL|O_TRUNC|O_CLOEXEC, 0666) = 3
+$ strace -eopen ./a.out ababab wbex 2>&1 | grep ababab ; rm -f ababab
+open("ababab", O_WRONLY|O_CREAT|O_TRUNC|O_CLOEXEC, 0666) = 3

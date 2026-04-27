@@ -1,0 +1,20 @@
+summary: Test for BZ#1988382 (annocheck reports pie/pic test failures on)
+description: |
+    Bug summary: annocheck reports pie/pic test failures on non-x86_64 architectures
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1988382
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1988382
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-9
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - annobin-annocheck
+  - glibc
+duration: 1h
+extra-summary: /tools/glibc/Regression/bz1988382-annocheck-reports-pie-pic-test-failures-on
+extra-task: /tools/glibc/Regression/bz1988382-annocheck-reports-pie-pic-test-failures-on

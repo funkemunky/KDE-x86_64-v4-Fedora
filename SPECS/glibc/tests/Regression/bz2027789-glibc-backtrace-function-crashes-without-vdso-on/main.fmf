@@ -1,0 +1,22 @@
+summary: Test for BZ#2027789 (glibc backtrace function crashes without vdso on)
+description: |
+    Bug summary: glibc: backtrace function crashes without vdso on ppc64le
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2027789
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2027789
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+adjust:
+  - enabled: false
+    when: distro < rhel-9
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - gcc
+  - glibc
+  - glibc-devel
+  - valgrind
+duration: 10m
+extra-summary: /tools/glibc/Regression/bz2027789-glibc-backtrace-function-crashes-without-vdso-on
+extra-task: /tools/glibc/Regression/bz2027789-glibc-backtrace-function-crashes-without-vdso-on

@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz799853-Slovakia-uses-Euro-as-currency
+Description: Test for BZ#799853 (Slovakia uses Euro as currency)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: Slovakia uses Euro as currency
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=799853

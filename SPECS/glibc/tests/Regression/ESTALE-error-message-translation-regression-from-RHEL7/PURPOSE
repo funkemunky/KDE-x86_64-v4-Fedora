@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/ESTALE-error-message-translation-regression-from-RHEL7
+Description: What the test does
+Author: Sergey Kolosov <skolosov@redhat.com>

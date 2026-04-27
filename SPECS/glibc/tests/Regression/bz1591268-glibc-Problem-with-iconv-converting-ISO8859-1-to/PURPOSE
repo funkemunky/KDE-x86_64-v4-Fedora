@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz1591268-glibc-Problem-with-iconv-converting-ISO8859-1-to
+Description: Test for BZ#1591268 (glibc Problem with iconv converting ISO8859-1 to)
+Author: Sergey Kolosov <skolosov@redhat.com>
+Bug summary: glibc: Problem with iconv converting ISO8859-1 to IBM273 [rhel-7]
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1591268

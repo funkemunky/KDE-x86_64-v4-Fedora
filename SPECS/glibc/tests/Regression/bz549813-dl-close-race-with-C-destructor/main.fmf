@@ -1,0 +1,113 @@
+summary: Test for bz549813 (dl_close() race with C++ destructor)
+description: |
+    Bug summary: dl_close() race with C++ destructor
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=549813
+
+    Description:
+
+    This looks like a dup of
+
+    http://sources.redhat.com/bugzilla/show_bug.cgi?id=654
+
+
+    Create a pthread in the library init. In fini, cancel the pthread and then join. If the main thread does a dlclose(), the program hangs at pthread_join(). 
+    It is stuck in a futex. I tried the testcase from http://sources.redhat.com/bugzilla/show_bug.cgi?id=654 and that fails too. 
+
+    One thing that may be relevant is that if dlopen is called with RTLD_NODELETE, pthread_join will not hang.
+
+
+    main program->
+
+    #include <stdio.h> 
+    #include <dlfcn.h> 
+
+    int main(int argc, char *argv[]) {
+    	void *handle;
+
+    	handle =  dlopen("tiny.so",RTLD_NOW);
+    	if (handle) 
+    		printf("loaded shared library\n");
+    	else {
+    		printf("could not load shared library\n");
+    		return (-1);
+    	}	
+    	sleep(1);
+    	dlclose(handle);
+
+    }
+
+    the lib ->
+
+    #include <pthread.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <stdlib.h>
+    #include <signal.h>
+    pthread_t t;
+
+
+    void *F(void *arg) {
+
+    	int old;
+    	if (pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &old) == 0) {
+    		printf("> cancelability enabled.\n");
+    	}
+    	else {
+    		printf("> could not set cancelability\n");
+    		return (0);
+    	}
+
+    	sleep(2);
+    } /*end F */
+
+    int _init_rick (void) {
+
+    printf("in init\n");
+        if (pthread_create(&t, NULL, (void *(*)(void *)) F, NULL) == 0) 
+    	printf("started thread\n");
+    else
+    	printf("could not start thread\n");
+
+    } /* end _init_rick */
+
+    int _fini_rick (void) {
+
+    	printf("in fini\n");
+
+    	printf("canceling thread\n");
+    	if (pthread_cancel(t) == 0)
+    		printf("canceled thread\n");
+    	else
+    		printf("could not cancel thread \n");
+    	
+    	printf("joining thread\n");
+    	if (pthread_join(t, NULL) == 0)
+    		printf("joined with thread\n");
+    	else
+    		printf("could not join with thread\n");
+
+
+    } /* end _fini_rick */
+contact: Petr Muller <pmuller@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 2
+framework: beakerlib
+require:
+  - make
+  - gcc
+  - glibc
+tag:
+  - tier2_mfranc
+  - simple
+  - noEWA
+  - Tier2
+  - not-er15271
+  - glibc-buildroot-ready
+  - CI-Tier-1
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=549813
+extra-summary: /tools/glibc/Regression/bz549813-dl-close-race-with-C-destructor
+extra-task: /tools/glibc/Regression/bz549813-dl-close-race-with-C-destructor

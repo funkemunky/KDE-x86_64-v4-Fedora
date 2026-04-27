@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/locale-archive-test
+Description: What the test does
+Author: Sergey Kolosov <skolosov@redhat.com>
+
+Test for locale-archive(glibc-all-langpacks). It came from https://bugzilla.redhat.com/show_bug.cgi?id=2057697

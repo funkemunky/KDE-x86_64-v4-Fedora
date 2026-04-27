@@ -1,0 +1,13 @@
+summary: This test groups small sanity and regression tests for util-linux
+description: ''
+contact: Miroslav Vadkerti <mvadkert@redhat.com>
+component:
+  - util-linux
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - util-linux
+  - util-linux-user
+duration: 10m
+extra-summary: /CoreOS/util-linux/Sanity/various
+extra-task: /CoreOS/util-linux/Sanity/various

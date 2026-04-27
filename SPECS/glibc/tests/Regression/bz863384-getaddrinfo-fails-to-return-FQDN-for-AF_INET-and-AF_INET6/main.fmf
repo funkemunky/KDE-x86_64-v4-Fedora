@@ -1,0 +1,28 @@
+summary: Tests if 'getaddrinfo' returns FQDN in ai_canonname.
+description: ''
+adjust:
+  - enabled: false
+    when: distro > rhel-9
+contact: Arjun Shankar <ashankar@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - bind-utils
+  - gcc
+  - glibc
+  - glibc-devel
+  - glibc-headers
+  - perl-Net-DNS-Nameserver
+tag:
+  - simple
+  - er15271
+  - glibc-buildroot-ready
+  - CI-Tier-1
+  - rhel8-buildroot
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=863384
+extra-summary: /tools/glibc/Regression/bz863384-getaddrinfo-fails-to-return-FQDN-for-AF_INET-and-AF_INET6
+extra-task: /tools/glibc/Regression/bz863384-getaddrinfo-fails-to-return-FQDN-for-AF_INET-and-AF_INET6

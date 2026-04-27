@@ -1,0 +1,9 @@
+Test Name: bz434601-timedlock-segfault - Bugzilla(s) 434601
+Author: Petr Muller <pmuller@redhat.com>
+Location: /tools/glibc/Regression/bz434601-timedlock-segfault
+
+Short Description: Tests segfault in pthread_mutex_timedlock function
+
+
+Long Description:
+Tests segfault in pthread_mutex_timedlock function

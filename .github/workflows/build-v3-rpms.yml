@@ -28,9 +28,11 @@ on:
       - '.copr/Makefile'
       - '.github/workflows/build-v3-rpms.yml'
       - 'ci/copr-distgit-make-srpm.py'
+      - 'ci/prefetch-fedora-specs.py'
       - 'ci/sync-copr-packages.py'
       - 'packages.txt'
       - 'packaging/copr-rpm-macros-x86-64-v3.spec'
+      - 'SPECS/**'
 
 permissions:
   contents: read

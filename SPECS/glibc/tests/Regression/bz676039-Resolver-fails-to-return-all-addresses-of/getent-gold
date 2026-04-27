@@ -1,0 +1,18 @@
+1.1.1.1         STREAM multihost
+1.1.1.1         DGRAM
+1.1.1.1         RAW
+2.2.2.2         STREAM
+2.2.2.2         DGRAM
+2.2.2.2         RAW
+3.3.3.3         STREAM
+3.3.3.3         DGRAM
+3.3.3.3         RAW
+1.1.1.1         STREAM multihost
+1.1.1.1         DGRAM
+1.1.1.1         RAW
+2.2.2.2         STREAM
+2.2.2.2         DGRAM
+2.2.2.2         RAW
+3.3.3.3         STREAM
+3.3.3.3         DGRAM
+3.3.3.3         RAW

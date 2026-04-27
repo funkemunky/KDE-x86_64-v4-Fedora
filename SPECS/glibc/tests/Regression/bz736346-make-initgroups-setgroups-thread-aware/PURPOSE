@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz736346-make-initgroups-setgroups-thread-aware
+Description: Test for bz736346 (make initgroups (setgroups) thread aware)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: make initgroups (setgroups) thread aware
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=736346

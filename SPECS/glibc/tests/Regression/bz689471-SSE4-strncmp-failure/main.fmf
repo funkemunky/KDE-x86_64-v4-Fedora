@@ -1,0 +1,71 @@
+summary: Test for bz689471 (SSE4 strncmp failure)
+description: |
+    Bug summary: SSE4 strncmp failure
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=689471
+
+    Description:
+
+    H.J. Lu      2011-03-21 05:42:34 CET  
+    On Intel Core i7, I got
+
+    [hjl@gnu-6 997]$ cat saved.c
+    #include <stdio.h>
+    #include <stdlib.h>
+    #include <string.h>
+    #include <sys/mman.h>
+
+    int main()
+    {
+        char *buf, *buf2;
+
+        buf = (char*)mmap((void*)0x100000000, 0x2000 * 2,
+                          PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        buf = mmap((char *)buf, 0x2000, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
+        memset(buf, 'a', 0x2000);
+        buf[0x1fff] = 0;
+        buf2 = strdup(buf);
+        if (strncmp (buf + 3994, buf2 + 2635, 6241) >= 0)
+          abort ();
+
+        return 0;
+    }
+    [hjl@gnu-6 997]$ gcc saved.c
+    [hjl@gnu-6 997]$ ./a.out 
+    Segmentation fault
+    [hjl@gnu-6 997]$ gdb a.out 
+    GNU gdb (GDB) 7.2.50.20110312-cvs
+    Copyright (C) 2011 Free Software Foundation, Inc.
+    License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+    This is free software: you are free to change and redistribute it.
+    There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+    and "show warranty" for details.
+    This GDB was configured as "x86_64-unknown-linux-gnu".
+    For bug reporting instructions, please see:
+    <http://www.gnu.org/software/gdb/bugs/>...
+    Reading symbols from /export/home/hjl/bugs/libc/997/a.out...(no debugging
+    symbols found)...done.
+    (gdb) r
+    Starting program: /export/home/hjl/bugs/libc/997/a.out 
+
+    Program received signal SIGSEGV, Segmentation fault.
+    0x0000003f7d3214a0 in __strncmp_sse42 () from /lib64/libc.so.6
+    (gdb)
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gcc
+tag:
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=689471
+extra-summary: /tools/glibc/Regression/bz689471-SSE4-strncmp-failure
+extra-task: /tools/glibc/Regression/bz689471-SSE4-strncmp-failure

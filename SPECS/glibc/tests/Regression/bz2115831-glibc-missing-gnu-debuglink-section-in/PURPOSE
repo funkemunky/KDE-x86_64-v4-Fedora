@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz2115831-glibc-missing-gnu-debuglink-section-in
+Description: Test for BZ#2115831 (glibc missing .gnu_debuglink section in libc.so.6,)
+Author: Sergey Kolosov <skolosov@redhat.com>
+Bug summary: glibc: missing .gnu_debuglink section in libc.so.6, redundant annobin symbols and debufginfo for ld.so
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2115831

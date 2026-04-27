@@ -1,0 +1,25 @@
+summary: Test for BZ#804630 (Bad resolution with IPv6 and rotate option in)
+description: |
+    Bug summary: Bad resolution with IPv6 and rotate option in resolv.conf
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=804630
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - bind
+  - bind-utils
+  - gcc
+  - glibc
+  - policycoreutils
+tag:
+  - ttt
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 90m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=804630
+extra-summary: /tools/glibc/Regression/bz804630-Bad-resolution-with-IPv6-and-rotate-option-in
+extra-task: /tools/glibc/Regression/bz804630-Bad-resolution-with-IPv6-and-rotate-option-in

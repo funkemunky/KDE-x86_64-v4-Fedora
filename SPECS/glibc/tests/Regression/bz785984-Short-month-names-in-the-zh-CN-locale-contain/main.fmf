@@ -1,0 +1,23 @@
+summary: Test for bz785984 (Short month names in the zh_CN locale contain)
+description: |
+    Bug summary: Short month names in the zh_CN locale contain space
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=785984
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-langpack-zh
+tag:
+  - rhel-6.3
+  - simple
+  - noEWA
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=785984
+extra-summary: /tools/glibc/Regression/bz785984-Short-month-names-in-the-zh-CN-locale-contain
+extra-task: /tools/glibc/Regression/bz785984-Short-month-names-in-the-zh-CN-locale-contain

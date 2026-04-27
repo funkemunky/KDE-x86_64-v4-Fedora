@@ -1,0 +1,29 @@
+summary: Test for bz789238 ([FJ6.2 Bug] malloc() deadlock in case of)
+description: |
+    Bug summary: [FJ6.2 Bug]: malloc() deadlock in case of allocation failure from main_arena.
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=789238
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - glibc-devel
+  - gcc
+  - coreutils
+tag:
+  - rhel-6.3
+  - ttt
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+  - CI-Tier-1
+  - NoRHEL5
+duration: 30h
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=789238
+extra-summary: /tools/glibc/Regression/bz789238-FJ6-2-Bug-malloc-deadlock-in-case-of
+extra-task: /tools/glibc/Regression/bz789238-FJ6-2-Bug-malloc-deadlock-in-case-of

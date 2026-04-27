@@ -1,0 +1,3 @@
+tr_TR
+tr_TR
+tr_TR.ISO8859-9

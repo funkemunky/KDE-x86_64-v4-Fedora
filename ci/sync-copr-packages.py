@@ -20,6 +20,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--commit", default="HEAD", help="Git ref Copr should build from")
     parser.add_argument("--chroot", default="fedora-43-x86_64", help="Copr chroot to configure and build for")
     parser.add_argument("--packages-file", default="packages.txt", help="Package list to register")
+    parser.add_argument("--specs-dir", default="SPECS", help="Directory containing repo-local package snapshots")
     parser.add_argument(
         "--package-input",
         default="",
@@ -84,6 +85,23 @@ def load_packages(packages_file: Path, package_input: str) -> list[str]:
     return deduped
 
 
+def resolve_spec_ref(package_name: str, specs_dir: Path) -> str:
+    package_dir = specs_dir / package_name
+    package_named_spec = package_dir / f"{package_name}.spec"
+    if package_named_spec.is_file():
+        return package_named_spec.as_posix()
+
+    spec_files = sorted(package_dir.glob("*.spec"))
+    if len(spec_files) == 1:
+        return spec_files[0].as_posix()
+    if len(spec_files) > 1:
+        raise RuntimeError(
+            f"multiple spec files found for {package_name} under {package_dir}; "
+            "set an explicit spec path instead"
+        )
+    raise RuntimeError(f"no spec file found for {package_name} under {package_dir}")
+
+
 def upsert_scm_package(
     *,
     project: str,
@@ -138,6 +156,7 @@ def submit_build(project: str, package_name: str, chroot: str, *, nowait: bool) 
 def main() -> int:
     args = parse_args()
     packages = load_packages(Path(args.packages_file), args.package_input)
+    specs_dir = Path(args.specs_dir)
 
     upsert_scm_package(
         project=args.project,
@@ -154,7 +173,7 @@ def main() -> int:
         upsert_scm_package(
             project=args.project,
             package_name=package_name,
-            spec_ref=package_name,
+            spec_ref=resolve_spec_ref(package_name, specs_dir),
             clone_url=args.clone_url,
             commit=args.commit,
             webhook_rebuild=args.webhook_rebuild,

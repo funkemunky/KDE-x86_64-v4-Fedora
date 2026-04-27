@@ -1,0 +1,3 @@
+PURPOSE of /tools/glibc/Regression/bz863384-getaddrinfo-fails-to-return-FQDN-for-AF_INET-and-AF_INET6
+Description: Tests if 'getaddrinfo' returns FQDN in ai_canonname.
+Author: Arjun Shankar <ashankar@redhat.com>

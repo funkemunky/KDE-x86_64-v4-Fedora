@@ -1,0 +1,16 @@
+PURPOSE of /tools/glibc/Regression/bz587360-digraph-matching-differs-across-archs
+Description: Test for bz587360 (Pattern matching of digraphs differs across archs)
+Author: Petr Splichal <psplicha@redhat.com>
+Bug summary: Pattern matching of digraphs inconsistent and differs across architectures
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=587360
+
+Description:
+
+The "ch" character is treated strangely by the latest sed while
+in the Czech locale. Seems to be a glibc issue. I was able to
+reproduce it on s390x & ppc only.
+
+The test was updated because of new behaviour or glibc-2.28 (and RHEL8
+accordingly). For more information:
+https://bugzilla.redhat.com/show_bug.cgi?id=1653745
+https://bugzilla.redhat.com/show_bug.cgi?id=1601681

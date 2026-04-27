@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz1988382-annocheck-reports-pie-pic-test-failures-on
+Description: Test for BZ#1988382 (annocheck reports pie/pic test failures on)
+Author: Sergey Kolosov <skolosov@redhat.com>
+Bug summary: annocheck reports pie/pic test failures on non-x86_64 architectures
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1988382

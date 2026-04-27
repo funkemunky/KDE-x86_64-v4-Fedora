@@ -1,0 +1,8 @@
+#define _GNU_SOURCE
+#include <link.h>
+
+
+unsigned int la_version(unsigned int ver)
+{
+   return 1;
+}

@@ -1,0 +1,6 @@
+
+zone "ns.bz1305132" {
+	type master;
+	file "named.hesiod";
+};
+

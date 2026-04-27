@@ -1,0 +1,18 @@
+summary: Test for BZ#2110357 (glibc mktime() fails with -EOVERFLOW when)
+description: |
+    Bug summary: glibc: mktime() fails with -EOVERFLOW when tm_isdst=1 and a neighboring DST boundary is far from tm_year
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=2110357
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=2110357
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-devel
+  - gcc
+duration: 10m
+extra-summary: /tools/glibc/Regression/bz2110357-glibc-mktime-fails-with-EOVERFLOW-when
+extra-task: /tools/glibc/Regression/bz2110357-glibc-mktime-fails-with-EOVERFLOW-when

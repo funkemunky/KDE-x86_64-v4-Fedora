@@ -1,0 +1,17 @@
+summary: Test for BZ#1561018 (glibc Enable annobin annotations)
+description: |
+    Bug summary: glibc: Enable annobin annotations
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1561018
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1561018
+contact: Alexandra Hájková <ahajkova@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+require:
+  - glibc
+  - elfutils
+duration: 1h
+extra-summary: /tools/glibc/Regression/bz1561018-glibc-Enable-annobin-annotations
+extra-task: /tools/glibc/Regression/bz1561018-glibc-Enable-annobin-annotations

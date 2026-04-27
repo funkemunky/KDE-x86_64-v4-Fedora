@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz789238-FJ6-2-Bug-malloc-deadlock-in-case-of
+Description: Test for bz789238 ([FJ6.2 Bug] malloc() deadlock in case of)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: [FJ6.2 Bug]: malloc() deadlock in case of allocation failure from main_arena.
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=789238

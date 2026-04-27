@@ -1,0 +1,126 @@
+PURPOSE of /tools/glibc/Regression/bz600457-locally-defined-symbol-resolving-failure
+Description: Test for bz600457 ([4.8] Unexpected failure of resolving a)
+Author: Petr Muller <pmuller@redhat.com>
+Bug summary: [4.8] Unexpected failure of resolving a locally-defined symbol.
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=600457
+
+Description:
+
+Customer Contact Name:
+Naoki Yanagimoto
+
+Description of Problem:
+This problem is the same as issue #580553 of RHEL5.
+This ticket is for RHEL4.
+
+We hit a failure of resolving a symbol which is locally defined in a library,
+in a complex case that I'll describe below.
+If the dynamic linker, glibc or something else has a bug in it, please fix it.
+If we did something wrong on creating a program, please point it out.
+
+We wrote a program that consists of an executable file and four libraries.
+The executable file a.out requires two libraries, libA and libX.
+The library libA requires another library libB.
+The library libB requires another library libC.
+
+The program operates in the following steps.
+
++------+      +-------+      +------+    +------+      +-----------------------------------+
+| libX |  (2) | a.out | (1)  | libA |----| libB |------| libC  (5)        (7)              |
+|      | <=== |  (8)  | ===> |      |    |      | <=== | atexit(libC_fini)--> _libC_fini() |
++------+  (3) +-------+ (6)  +------+    +------+  (4) +-----------------------------------+
+
+(1) a.out calls dlopen() for libA.
+    libB and libC shall be loaded, too.
+(2) a.out calls dlopen() for libX.
+(3) a.out calls dlclose() for libX.
+(4) libC calls dlopen() for libB.
+(5) libC calls atexit() to register libC_fini().
+(6) a.out calls dlclose() for libA.
+    libB and libC are no longer needed, so both libraries shall be getting unloaded.
+(7) libC_fini() shall be called when libC is getting unloaded.
+(8) a.out exits.
+
+But when we run the program, unexpectedly
+
+a) step (7) is executed _after_ step (8)
+b) libC cannot resolve a locally-defined symbol _libC_fini at executing (7)
+
+Version-Release number of selected component:
+- Red Hat Enterprise Linux Version Number: 4
+- Release Number: 8
+- Architecture: x86
+- Kernel Version: 2.6.9-89.ELsmp
+- Related Package Version: glibc-2.3.4-2.43.el4_8.2
+- Related Middleware / Application: None
+
+Drivers or hardware or architecture dependency:
+None.
+
+How reproducible:
+always.
+
+Step to Reproduce:
+1) Extract the reproducer.
+   $ tar zxvf reproducer.tar.gz
+
+2) Compile it.
+   $ cd reproducer
+   $ make
+
+3) Run it.
+   $ ./run.sh
+
+Actual Results:
+$ ./run.sh
+1)main:dlopen  libA.so
+2)main:dlopen  libX.so
+3)main:dlclose libX.so
+4)libC:dlopen  libB.so
+5)libC:atexit(libC_fini)
+6)main:dlclose libA.so
+8)main:finish main
+./main: symbol lookup error: ./libC.so: undefined symbol: _libC_fini
+
+Expected Results:
+$ ./run.sh
+1)main:dlopen  libA.so
+2)main:dlopen  libX.so
+3)main:dlclose libX.so
+4)libC:dlopen  libB.so
+5)libC:atexit(libC_fini)
+6)main:dlclose libA.so
+7)libC:finish - atexit()
+8)main:finish main
+
+Summary of actions taken to resolve issue:
+None.
+
+Location of diagnostic data:
+None.
+
+Hardware configuration:
+Model: PRIMERGY RX300 S5
+CPU Info: Xeon(R) 2.27GHz x2
+Memory Info: 3GB
+Hardware Component Information: None
+Configuration Info: None
+Guest Configuration Info: None
+
+Business Impact:
+The application suffering this issue cannot call the function registered
+by atexit() because of the failure of resolving its symbol. It causes two
+severe problems, a) the failure of cooperation with other processes by
+notifying them of its completion, and b) the system resource leaks by not
+freeing them.
+
+Target Release: 4.9
+
+Errata Request: async errata for 4.8
+
+Hotfix Request: None.
+
+Additional Info:
+Sosreport and reproducer are attached.
+
+This is the same bug as IT #580553 https://bugzilla.redhat.com/show_bug.cgi?id=593675 (RHEL5)

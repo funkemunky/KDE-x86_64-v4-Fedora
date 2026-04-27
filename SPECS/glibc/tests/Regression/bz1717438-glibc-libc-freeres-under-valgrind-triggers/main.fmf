@@ -1,0 +1,18 @@
+summary: Test for BZ#1717438 (glibc __libc_freeres (under valgrind) triggers bad)
+description: |
+    Bug summary: glibc: __libc_freeres (under valgrind) triggers bad free in libdl if dlerror was not used
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1717438
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1717438
+contact: Sergey Kolosov <skolosov@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-devel
+  - valgrind
+duration: 20m
+extra-summary: /tools/glibc/Regression/bz1717438-glibc-libc-freeres-under-valgrind-triggers
+extra-task: /tools/glibc/Regression/bz1717438-glibc-libc-freeres-under-valgrind-triggers

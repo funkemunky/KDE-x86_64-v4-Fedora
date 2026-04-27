@@ -1,0 +1,10 @@
+--- a/src/TesseractRuntimeLoader.cpp	2026-03-26 21:32:02.680433537 -0400
++++ b/src/TesseractRuntimeLoader.cpp	2026-03-26 21:34:48.316497563 -0400
+@@ -185,5 +185,6 @@
+ 
+ QStringList TesseractRuntimeLoader::candidateLibraryNames() const
+ {
+-    return {QStringLiteral("tesseract")};
++    return {QStringLiteral("libtesseract.so.5.5"), QStringLiteral("libtesseract.so.5.3.4"), QStringLiteral("libtesseract.so.5"),
++    QStringLiteral("libtesseract.so.4"), QStringLiteral("libtesseract.so")};
+ }

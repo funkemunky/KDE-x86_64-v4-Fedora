@@ -1,0 +1,22 @@
+summary: Test for BZ#1882466 (RHEL8.2 - LD_PRELOAD of <some lib that has)
+description: |
+    Bug summary: RHEL8.2 - LD_PRELOAD of <some lib that has libstdc++ and libgnu_s linked in> /lib64/libc.so.6 will segfault (glibc)
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1882466
+contact:
+- Sergey Kolosov <skolosov@redhat.com>
+component:
+- glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+- gcc-c++
+- glibc
+- glibc-devel
+- libstdc++
+- glibc.i686
+- glibc-devel.i686
+- libstdc++.i686
+- libgcc.i686
+duration: 20m
+extra-summary: /tools/glibc/Regression/bz1882466-RHEL8-2-LD-PRELOAD-of-some-lib-that-has
+extra-task: /tools/glibc/Regression/bz1882466-RHEL8-2-LD-PRELOAD-of-some-lib-that-has

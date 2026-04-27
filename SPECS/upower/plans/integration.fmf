@@ -1,0 +1,19 @@
+summary: Test for Upower
+discover:
+    how: fmf
+prepare:
+  - name: packages
+    how: install
+    package:
+        - upower
+        - upower-tests
+        - umockdev-devel
+        - dbus-x11
+        - polkit-devel
+        - python3-dbus
+        - python3-dbusmock
+        - python3-gobject-base
+        - python3-pip
+        - python3-packaging
+execute:
+    how: tmt

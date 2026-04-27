@@ -1,0 +1,62 @@
+summary: Test for bz692177 (sysconf(_SC_*CACHE) returns 0 for all caches on)
+description: |
+    Bug summary: sysconf(_SC_*CACHE) returns 0 for all caches on some CPUs.
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=692177
+
+    Description:
+
+    Description of problem:
+      The mechanism that sysconf(3) uses to get the various CACHE parameters
+      fails on the Xen 5670
+
+    Version-Release number of selected component (if applicable): 2.12-1.7.el6_0.4
+
+    How reproducible:
+      Every time
+
+    Steps to Reproduce:
+    1.  Find a machine whose /proc/cpuinfo starts something like this:
+
+      vendor_id       : GenuineIntel
+      cpu family      : 6
+      model           : 44
+      model name      : Intel(R) Xeon(R) CPU           X5670  @ 2.93GHz
+      stepping        : 2
+
+    2. run "getconf -a | grep CACHE"
+    3. Observe values printed
+      
+    Actual results:
+      All the cache parameter values are zero.
+
+    Expected results:
+      Non-zero values for all but the level 4 cache
+
+    Additional info:
+      Recent CPUs no longer have useful cpuid leaf 2 cache descriptors.  For this
+      particular machine, cpuid 2 returns 0x55035a01 0xf0b2ff 0x0 0xca0000 in eax,
+      ebx, ecx and edx respectively.  The 0xff in the least significant byte of
+      ebx indicates that you need to use cpuid leaf 4.  Actually, for all but
+      somewhat old CPUs you're better off using cpuid leaf 4 anyway (the only
+      machines I have access to that have a cpuid level less than four are a
+      "Intel(R) Pentium(R) 4 CPU 1.70GHz" and "Intel(R) Pentium(R) 4 CPU 2.40GHz"
+      both of which are long past their use-by date).
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+tag:
+  - simple
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 15m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=692177
+extra-summary: /tools/glibc/Regression/bz692177-sysconf-SC-CACHE-returns-0-for-all-caches-on
+extra-task: /tools/glibc/Regression/bz692177-sysconf-SC-CACHE-returns-0-for-all-caches-on

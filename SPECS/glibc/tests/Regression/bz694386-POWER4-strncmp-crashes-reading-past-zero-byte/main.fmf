@@ -1,0 +1,27 @@
+summary: Test for bz694386 (POWER4 strncmp crashes reading past zero byte)
+description: |
+    Bug summary: POWER4 strncmp crashes reading past zero byte
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=694386
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - glibc-headers
+  - glibc-devel
+  - glibc-common
+  - gcc
+tag:
+  - rhel-6.2
+  - simple
+  - noEWA
+  - Tier2
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 30m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=694386
+extra-summary: /tools/glibc/Regression/bz694386-POWER4-strncmp-crashes-reading-past-zero-byte
+extra-task: /tools/glibc/Regression/bz694386-POWER4-strncmp-crashes-reading-past-zero-byte

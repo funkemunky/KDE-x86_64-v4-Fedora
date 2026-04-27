@@ -1,0 +1,19 @@
+summary: "Test for BZ#1661513 (glibc: Adjust to rpm's find-debuginfo.sh changes, to\
+    \ keep stripping binaries)"
+description: |
+    Bug summary: glibc: Adjust to rpm's find-debuginfo.sh changes, to keep stripping binaries
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=1661513
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=1661513
+contact: Martin Coufal <mcoufal@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+framework: beakerlib
+recommend:
+  - glibc
+  - gdb
+duration: 15m
+order: 1000
+extra-summary: /tools/glibc/Regression/bz1661513-glibc-Adjust-to-rpms-find-debuginfo-sh-changes-to-keep-stripping-binaries
+extra-task: /tools/glibc/Regression/bz1661513-glibc-Adjust-to-rpms-find-debuginfo-sh-changes-to-keep-stripping-binaries

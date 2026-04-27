@@ -1,0 +1,5 @@
+PURPOSE of /tools/glibc/Regression/bz804689-getaddrinfo-localhost6-returns-127-0-0-1
+Description: Test for bz804689 (getaddrinfo("localhost6") returns 127.0.0.1)
+Author: Miroslav Franc <mfranc@redhat.com>
+Bug summary: getaddrinfo("localhost6") returns 127.0.0.1
+Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=804689

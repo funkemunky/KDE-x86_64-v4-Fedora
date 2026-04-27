@@ -1,0 +1,24 @@
+summary: Ensure fallocate() extends files by the correct amount
+description: |
+    Ensure fallocate() extends files by the correct amount. fallocate() is wrapped in fallocate.c++ source code. 
+contact: David Malcolm <dmalcolm@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 2
+framework: beakerlib
+require:
+  - glibc
+  - gcc-c++
+tag:
+  - simple
+  - tier2_mfranc
+  - noEWA
+  - Tier2
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 3m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=156289
+extra-summary: /tools/glibc/fallocate_156289
+extra-task: /tools/glibc/fallocate_156289

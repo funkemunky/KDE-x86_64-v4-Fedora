@@ -1,0 +1,25 @@
+summary: Test for bz804689 (getaddrinfo("localhost6") returns 127.0.0.1)
+description: |
+    Bug summary: getaddrinfo("localhost6") returns 127.0.0.1
+    Bugzilla link: https://bugzilla.redhat.com/show_bug.cgi?id=804689
+contact: Miroslav Franc <mfranc@redhat.com>
+component:
+  - glibc
+test: ./runtest.sh
+tier: 1
+framework: beakerlib
+require:
+  - glibc
+  - gcc
+tag:
+  - simple
+  - rhel-6.3
+  - noEWA
+  - Tier1
+  - not-er15271
+  - glibc-buildroot-ready
+duration: 6m
+link:
+  - relates: https://bugzilla.redhat.com/show_bug.cgi?id=804689
+extra-summary: /tools/glibc/Regression/bz804689-getaddrinfo-localhost6-returns-127-0-0-1
+extra-task: /tools/glibc/Regression/bz804689-getaddrinfo-localhost6-returns-127-0-0-1
