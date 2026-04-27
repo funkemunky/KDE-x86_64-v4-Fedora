@@ -126,7 +126,12 @@ jobs:
           from pathlib import Path
 
           workspace = Path(os.environ["GITHUB_WORKSPACE"])
-          outdir = workspace / "artifacts" / f"srpm-shard-{os.environ['SHARD_LABEL']}"
+          shard_label = os.environ.get("SHARD_LABEL") or "000"
+          packages = json.loads(os.environ.get("PACKAGES_JSON") or "[]")
+          if packages is None:
+              packages = []
+
+          outdir = workspace / "artifacts" / f"srpm-shard-{shard_label}"
           outdir.mkdir(parents=True, exist_ok=True)
 
           subprocess.run(
@@ -142,7 +147,7 @@ jobs:
               cwd=workspace,
           )
 
-          for package_name in json.loads(os.environ["PACKAGES_JSON"]):
+          for package_name in packages:
               subprocess.run(
                   [
                       "make",
