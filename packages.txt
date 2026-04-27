@@ -79,14 +79,12 @@ spectacle
 xwaylandvideobridge
 audit
 bash
-bluez
 dbus
 glibc
 NetworkManager
 openssl
 pipewire
 polkit
-rtkit
 udisks2
 upower
 util-linux
