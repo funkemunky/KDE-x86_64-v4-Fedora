@@ -43,6 +43,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--submit-macro-build", action="store_true")
     parser.add_argument("--submit-package-builds", action="store_true")
     parser.add_argument("--nowait-package-builds", action="store_true")
+    parser.add_argument(
+        "--copr-debug",
+        action="store_true",
+        help="Run copr-cli commands with --debug and include full output on failures.",
+    )
     return parser.parse_args()
 
 
@@ -55,6 +60,37 @@ def run(command: list[str], *, quiet: bool = False) -> subprocess.CompletedProce
         kwargs["stdout"] = subprocess.DEVNULL
         kwargs["stderr"] = subprocess.DEVNULL
     return subprocess.run(command, **kwargs)
+
+
+def run_copr(args: argparse.Namespace, command: list[str]) -> subprocess.CompletedProcess[str]:
+    copr_command = command[:]
+    if args.copr_debug and len(copr_command) >= 1 and copr_command[0] == "copr":
+        copr_command.insert(1, "--debug")
+
+    try:
+        return subprocess.run(
+            copr_command,
+            check=True,
+            text=True,
+            capture_output=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        stdout = (exc.stdout or "").strip()
+        stderr = (exc.stderr or "").strip()
+        details = []
+        if stdout:
+            details.append(f"stdout:\n{stdout}")
+        if stderr:
+            details.append(f"stderr:\n{stderr}")
+        output_block = "\n\n".join(details) if details else "(no output captured)"
+        raise RuntimeError(
+            "Copr command failed:\n"
+            f"{' '.join(copr_command)}\n\n"
+            f"{output_block}\n\n"
+            "If this includes 'Response is not in JSON format', the server likely "
+            "returned an HTML error page (auth issue, wrong project path/casing, or "
+            "temporary Copr outage). Re-run with --copr-debug for request details."
+        ) from exc
 
 
 def package_exists(project: str, package_name: str) -> bool:
@@ -104,6 +140,7 @@ def resolve_spec_ref(package_name: str, specs_dir: Path) -> str:
 
 def upsert_scm_package(
     *,
+    args: argparse.Namespace,
     project: str,
     package_name: str,
     spec_ref: str,
@@ -122,23 +159,23 @@ def upsert_scm_package(
         package_name,
         "--clone-url",
         clone_url,
-        "--commit",
-        commit,
         "--method",
         "make_srpm",
         "--spec",
         spec_ref,
-        "--webhook-rebuild",
-        webhook_rebuild,
-        "--max-builds",
-        str(max_builds),
-        "--timeout",
-        str(timeout),
     ]
-    run(command)
+    if commit != "HEAD":
+        command.extend(["--commit", commit])
+    if webhook_rebuild != "off":
+        command.extend(["--webhook-rebuild", webhook_rebuild])
+    if max_builds != 0:
+        command.extend(["--max-builds", str(max_builds)])
+    if timeout != 18000:
+        command.extend(["--timeout", str(timeout)])
+    run_copr(args, command)
 
 
-def submit_build(project: str, package_name: str, chroot: str, *, nowait: bool) -> None:
+def submit_build(args: argparse.Namespace, project: str, package_name: str, chroot: str, *, nowait: bool) -> None:
     command = [
         "copr",
         "build-package",
@@ -150,7 +187,7 @@ def submit_build(project: str, package_name: str, chroot: str, *, nowait: bool) 
     ]
     if nowait:
         command.append("--nowait")
-    run(command)
+    run_copr(args, command)
 
 
 def main() -> int:
@@ -158,7 +195,11 @@ def main() -> int:
     packages = load_packages(Path(args.packages_file), args.package_input)
     specs_dir = Path(args.specs_dir)
 
+    # Preflight to fail fast on auth/project typos before batch operations.
+    run_copr(args, ["copr", "get", args.project])
+
     upsert_scm_package(
+        args=args,
         project=args.project,
         package_name=args.macro_package_name,
         spec_ref=args.macro_package_spec,
@@ -171,6 +212,7 @@ def main() -> int:
 
     for package_name in packages:
         upsert_scm_package(
+            args=args,
             project=args.project,
             package_name=package_name,
             spec_ref=resolve_spec_ref(package_name, specs_dir),
@@ -182,7 +224,8 @@ def main() -> int:
         )
 
     if not args.skip_chroot_update:
-        run(
+        run_copr(
+            args,
             [
                 "copr",
                 "edit-chroot",
@@ -193,11 +236,12 @@ def main() -> int:
         )
 
     if args.submit_macro_build:
-        submit_build(args.project, args.macro_package_name, args.chroot, nowait=False)
+        submit_build(args, args.project, args.macro_package_name, args.chroot, nowait=False)
 
     if args.submit_package_builds:
         for package_name in packages:
             submit_build(
+                args,
                 args.project,
                 package_name,
                 args.chroot,
