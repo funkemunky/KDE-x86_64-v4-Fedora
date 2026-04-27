@@ -10,7 +10,6 @@ import subprocess
 import tempfile
 import time
 import urllib.parse
-import urllib.request
 from pathlib import Path
 
 
@@ -110,9 +109,20 @@ def download_file(url: str, destination: Path, *, algorithm: str, checksum: str,
             return
 
         try:
-            with urllib.request.urlopen(url) as response, destination.open("wb") as handle:
-                shutil.copyfileobj(response, handle)
-        except Exception:
+            subprocess.run(
+                [
+                    "curl",
+                    "--fail",
+                    "--location",
+                    "--silent",
+                    "--show-error",
+                    "--output",
+                    str(destination),
+                    url,
+                ],
+                check=True,
+            )
+        except subprocess.CalledProcessError:
             if destination.exists():
                 destination.unlink()
             if attempt == attempts:
@@ -212,6 +222,20 @@ def download_lookaside_sources(
         )
 
 
+def ensure_lookaside_sources_present(package_name: str, source_dir: Path) -> None:
+    missing = [
+        filename
+        for _, filename, _ in parse_sources_file(source_dir / "sources")
+        if not (source_dir / filename).is_file()
+    ]
+    if missing:
+        missing_list = ", ".join(missing)
+        raise RuntimeError(
+            f"lookaside sources missing for {package_name}: {missing_list}. "
+            "The Fedora lookaside download step did not leave the expected files in place."
+        )
+
+
 def main() -> int:
     args = parse_args()
     outdir = Path(args.outdir).resolve()
@@ -228,6 +252,7 @@ def main() -> int:
                 lookaside_baseurl=args.lookaside_baseurl.rstrip("/"),
                 attempts=args.retry_count,
             )
+            ensure_lookaside_sources_present(package_name, local_spec.parent)
         srpm = build_srpm(local_spec, source_dir=local_spec.parent, outdir=outdir, dist=args.dist)
         print(f"built local SRPM {srpm.name}")
         return 0
@@ -247,6 +272,7 @@ def main() -> int:
         lookaside_baseurl=args.lookaside_baseurl.rstrip("/"),
         attempts=args.retry_count,
     )
+    ensure_lookaside_sources_present(args.spec_ref, package_dir)
     srpm = build_srpm(package_spec, source_dir=package_dir, outdir=outdir, dist=args.dist)
     print(f"built package SRPM {srpm.name}")
     return 0
