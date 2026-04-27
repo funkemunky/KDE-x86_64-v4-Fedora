@@ -239,3 +239,10 @@ jobs:
                   cwd=workspace,
               )
           PY
+
+      - name: Upload SRPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: srpm-shard-${{ matrix.shard }}
+          path: artifacts/srpm-shard-${{ matrix.shard }}/
+          if-no-files-found: error
